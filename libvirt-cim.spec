@@ -3,7 +3,7 @@
 Summary: A CIM provider for libvirt
 Name: libvirt-cim
 Version: 0.6.1
-Release: 9%{?dist}.1%{?extra_release}
+Release: 9%{?dist}.2%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
 Source: ftp://libvirt.org/libvirt-cim/libvirt-cim-%{version}.tar.gz
@@ -30,6 +30,7 @@ Patch8: libvirt-cim-0.6.1-use-top_srcdir-in-Makefile.patch
 Patch9: libvirt-cim-0.6.1-Coverity-Resolve-RESOURCE_LEAK-parse_os.patch
 Patch10: libvirt-cim-0.6.1-libxkutil-Improve-domain.os_info-cleanup.patch
 Patch11: libvirt-cim-0.6.1-VSSD-Add-properties-for-arch-and-machine.patch
+Patch12: libvirt-cim-0.6.1-Complete-the-support-for-dumpCore.patch
 
 # In RHEL5 uuid-devel is provided by e2fsprogs
 %if 0%{?el5}
@@ -67,6 +68,7 @@ platforms with a single provider.
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
 
 %build
 # Rebuild makefiles changed by Patch1
@@ -245,6 +247,9 @@ fi
 %config(noreplace) %{_sysconfdir}/libvirt-cim.conf
 
 %changelog
+* Tue Sep 16 2014 John Ferlan <jferlan@redhat.com> - 0.6.1-9.el6_5.2
+- Complete the support for dumpCore rhbz#1142392
+
 * Mon Jan 20 2014 John Ferlan <jferlan@redhat.com> - 0.6.1-9.el6_5.1
 - VSSD: Add properties for arch and machine (rhbz#1055626)
 - libxkutil: Improve domain.os_info cleanup

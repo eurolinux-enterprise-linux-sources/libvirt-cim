@@ -1,0 +1,99 @@
+From 43ea7135654413b50601612ab0ab18cd8c47d84c Mon Sep 17 00:00:00 2001
+From: Xu Wang <gesaint@linux.vnet.ibm.com>
+Date: Mon, 26 May 2014 17:00:35 +0800
+Subject: [PATCH] Complete the support for dumpCore
+
+Add API support for dumpCore field of Memory devices and fix issue in
+parse_mem_device() when parsing dumpCore field.
+
+Signed-off-by: Xu Wang <gesaint@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/device_parsing.c                |  5 +++--
+ schema/ResourceAllocationSettingData.mof  |  3 +++
+ src/Virt_RASD.c                           |  8 ++++++++
+ src/Virt_VirtualSystemManagementService.c | 11 +++++++++++
+ 4 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index f863cc5..815feea 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -850,9 +850,9 @@ static int parse_mem_device(xmlNode *node, struct virt_device **vdevs)
+         else if (XSTREQ(node->name, "memory")) {
+                 sscanf(content, "%" PRIu64, &mdev->maxsize);
+                 content = get_attr_value(node, "dumpCore");
+-                if (content && XSTREQ(content, "on")) {
++                if (content && STREQC(content, "on")) {
+                     mdev->dumpCore = MEM_DUMP_CORE_ON;
+-                } else if (content && XSTREQ(content, "off")) {
++                } else if (content && STREQC(content, "off")) {
+                     mdev->dumpCore = MEM_DUMP_CORE_OFF;
+                 } else {
+                     mdev->dumpCore = MEM_DUMP_CORE_NOT_SET;
+@@ -1438,6 +1438,7 @@ struct virt_device *virt_device_dup(struct virt_device *_dev)
+         } else if (dev->type == CIM_RES_TYPE_MEM) {
+                 dev->dev.mem.size = _dev->dev.mem.size;
+                 dev->dev.mem.maxsize = _dev->dev.mem.maxsize;
++                dev->dev.mem.dumpCore = _dev->dev.mem.dumpCore;
+         } else if (dev->type == CIM_RES_TYPE_PROC) {
+                 dev->dev.vcpu.quantity = _dev->dev.vcpu.quantity;
+         } else if (dev->type == CIM_RES_TYPE_EMU) {
+diff --git a/schema/ResourceAllocationSettingData.mof b/schema/ResourceAllocationSettingData.mof
+index f78d423..ba57b55 100644
+--- a/schema/ResourceAllocationSettingData.mof
++++ b/schema/ResourceAllocationSettingData.mof
+@@ -229,6 +229,9 @@ class Xen_MemResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+ ]
+ class KVM_MemResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+ {
++      [Description ("dumpCore could be set as 'on' or 'off'. "
++                    "it also could be leave null.")]
++      boolean dumpCore;
+ };
+ 
+ [Description ("LXC virtual memory"),
+diff --git a/src/Virt_RASD.c b/src/Virt_RASD.c
+index 761d053..9a028bd 100644
+--- a/src/Virt_RASD.c
++++ b/src/Virt_RASD.c
+@@ -1047,6 +1047,14 @@ CMPIInstance *rasd_from_vdev(const CMPIBroker *broker,
+                               (CMPIValue *)&dev->dev.mem.size, CMPI_uint64);
+                 CMSetProperty(inst, "Limit",
+                               (CMPIValue *)&dev->dev.mem.maxsize, CMPI_uint64);
++
++                if (dev->dev.mem.dumpCore != MEM_DUMP_CORE_NOT_SET) {
++                        bool dumpCore = true;
++                        if (dev->dev.mem.dumpCore == MEM_DUMP_CORE_OFF)
++                                dumpCore = false;
++                        CMSetProperty(inst, "dumpCore",
++                                      (CMPIValue *)&dumpCore, CMPI_boolean);
++                }
+         } else if (dev->type == CIM_RES_TYPE_PROC) {
+                 set_proc_rasd_params(broker, ref, dev, host, inst);
+         } else if (dev->type == CIM_RES_TYPE_GRAPHICS) {
+diff --git a/src/Virt_VirtualSystemManagementService.c b/src/Virt_VirtualSystemManagementService.c
+index c640360..bf96afe 100644
+--- a/src/Virt_VirtualSystemManagementService.c
++++ b/src/Virt_VirtualSystemManagementService.c
+@@ -1239,6 +1239,17 @@ static const char *mem_rasd_to_vdev(CMPIInstance *inst,
+         const char *units;
+         CMPIrc ret;
+         int shift;
++        bool dumpCore;
++
++        ret = cu_get_bool_prop(inst, "dumpCore", &dumpCore);
++        if (ret != CMPI_RC_OK) {
++                dev->dev.mem.dumpCore = MEM_DUMP_CORE_NOT_SET;
++        } else {
++                if (dumpCore)
++                        dev->dev.mem.dumpCore = MEM_DUMP_CORE_ON;
++                else
++                        dev->dev.mem.dumpCore = MEM_DUMP_CORE_OFF;
++        }
+ 
+         ret = cu_get_u64_prop(inst, "VirtualQuantity", &dev->dev.mem.size);
+         if (ret != CMPI_RC_OK)
+-- 
+1.9.3
+
