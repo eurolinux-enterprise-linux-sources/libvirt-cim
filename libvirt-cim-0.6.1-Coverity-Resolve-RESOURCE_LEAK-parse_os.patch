@@ -1,0 +1,53 @@
+From bde70b74ea37cfeec7b7d46470f5f2fdbb93fa18 Mon Sep 17 00:00:00 2001
+From: John Ferlan <jferlan@redhat.com>
+Date: Thu, 9 May 2013 17:25:48 -0400
+Subject: [PATCH] Coverity: Resolve RESOURCE_LEAK - parse_os()
+
+There's a loop to allocate and fill in a 'blist' array with entries
+that is then only saved for a specific domain type ("hvm").  If not
+hvm, then the blist is not freed
+
+(54) Event cond_false:
+    Condition "strcasecmp(dominfo->os_info.fv.type, "hvm") == 0",
+    taking false branch
+
+1101            if (STREQC(dominfo->os_info.fv.type, "hvm")) {
+1102                    dominfo->os_info.fv.bootlist_ct = bl_size;
+1103                    dominfo->os_info.fv.bootlist = blist;
+
+(55) Event if_end:
+    End of if statement
+
+1104            }
+1105
+
+(56) Event leaked_storage:
+    Variable "blist" going out of scope leaks the storage it points to.
+
+Resolve by adding code to free the memory
+
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/device_parsing.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index 767892a..16195da 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -1128,6 +1128,12 @@ static int parse_os(struct domain *dominfo, xmlNode *os)
+         if (STREQC(dominfo->os_info.fv.type, "hvm")) {
+                 dominfo->os_info.fv.bootlist_ct = bl_size;
+                 dominfo->os_info.fv.bootlist = blist;
++        } else {
++            int i;
++
++            for (i = 0; i < bl_size; i++)
++                free(blist[i]);
++            free(blist);
+         }
+ 
+         return 1;
+-- 
+1.8.4.2
+

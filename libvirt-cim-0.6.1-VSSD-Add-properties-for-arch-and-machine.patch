@@ -1,0 +1,170 @@
+From 6024403e02643db81555e3333463b2f0e1b206b5 Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Thu, 29 Aug 2013 17:18:50 +0200
+Subject: [PATCH] VSSD: Add properties for arch and machine
+
+For architectures like s390 the machine type is relevant for
+the proper guest construction. We add the necessary properties
+to the schema and the C structures and the necessary code
+for CIM-to-libvirt mapping.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/device_parsing.c                | 12 ++++++++++++
+ libxkutil/device_parsing.h                |  2 ++
+ libxkutil/xmlgen.c                        |  6 ++++++
+ schema/VSSD.mof                           |  6 ++++++
+ src/Virt_VSSD.c                           |  9 +++++++++
+ src/Virt_VirtualSystemManagementService.c | 14 ++++++++++++++
+ 6 files changed, 49 insertions(+)
+
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index ad0f19c..7af3953 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -1116,6 +1116,8 @@ static int parse_os(struct domain *dominfo, xmlNode *os)
+         xmlNode *child;
+         char **blist = NULL;
+         unsigned bl_size = 0;
++        char *arch = NULL;
++        char *machine = NULL;
+         char *kernel = NULL;
+         char *initrd = NULL;
+         char *cmdline = NULL;
+@@ -1126,6 +1128,8 @@ static int parse_os(struct domain *dominfo, xmlNode *os)
+         for (child = os->children; child != NULL; child = child->next) {
+                 if (XSTREQ(child->name, "type")) {
+                         STRPROP(dominfo, os_info.pv.type, child);
++                        arch = get_attr_value(child, "arch");
++                        machine = get_attr_value(child, "machine");
+                 } else if (XSTREQ(child->name, "kernel"))
+                         kernel = get_node_content(child);
+                 else if (XSTREQ(child->name, "initrd"))
+@@ -1173,9 +1177,13 @@ static int parse_os(struct domain *dominfo, xmlNode *os)
+         case DOMAIN_KVM:
+         case DOMAIN_QEMU:
+                 dominfo->os_info.fv.loader = loader;
++                dominfo->os_info.fv.arch = arch;
++                dominfo->os_info.fv.machine = machine;
+                 dominfo->os_info.fv.bootlist_ct = bl_size;
+                 dominfo->os_info.fv.bootlist = blist;
+                 loader = NULL;
++                arch = NULL;
++                machine = NULL;
+                 blist = NULL;
+                 bl_size = 0;
+                 break;
+@@ -1195,6 +1203,8 @@ static int parse_os(struct domain *dominfo, xmlNode *os)
+                 break;
+         }
+ 
++        free(arch);
++        free(machine);
+         free(kernel);
+         free(initrd);
+         free(cmdline);
+@@ -1398,6 +1408,8 @@ void cleanup_dominfo(struct domain **dominfo)
+                    (dom->type == DOMAIN_KVM) || (dom->type == DOMAIN_QEMU)) {
+                 free(dom->os_info.fv.type);
+                 free(dom->os_info.fv.loader);
++                free(dom->os_info.fv.arch);
++                free(dom->os_info.fv.machine);
+                 cleanup_bootlist(dom->os_info.fv.bootlist,
+                                  dom->os_info.fv.bootlist_ct);
+         } else if (dom->type == DOMAIN_LXC) {
+diff --git a/libxkutil/device_parsing.h b/libxkutil/device_parsing.h
+index 979b792..df5080c 100644
+--- a/libxkutil/device_parsing.h
++++ b/libxkutil/device_parsing.h
+@@ -139,6 +139,8 @@ struct pv_os_info {
+ 
+ struct fv_os_info {
+         char *type; /* Should always be 'hvm' */
++        char *arch;
++        char *machine;
+         char *loader;
+         unsigned bootlist_ct;
+         char **bootlist;
+diff --git a/libxkutil/xmlgen.c b/libxkutil/xmlgen.c
+index 30e9a5e..2ca2341 100644
+--- a/libxkutil/xmlgen.c
++++ b/libxkutil/xmlgen.c
+@@ -811,6 +811,12 @@ static char *_kvm_os_xml(xmlNodePtr root, struct domain *domain)
+         if (tmp == NULL)
+                 return XML_ERROR;
+ 
++        if (os->arch)
++                xmlNewProp(tmp, BAD_CAST "arch", BAD_CAST os->arch);
++
++        if (os->machine)
++                xmlNewProp(tmp, BAD_CAST "machine", BAD_CAST os->machine);
++
+         ret = _fv_bootlist_xml(root, os);
+         if (ret == 0)
+                 return XML_ERROR;
+diff --git a/schema/VSSD.mof b/schema/VSSD.mof
+index 0359d67..2734d8e 100644
+--- a/schema/VSSD.mof
++++ b/schema/VSSD.mof
+@@ -48,6 +48,12 @@ class KVM_VirtualSystemSettingData : Virt_VirtualSystemSettingData
+   [Description ("The emulator the guest should use during runtime.")]
+   string Emulator;
+ 
++  [Description ("The guest's architecture.")]
++  string Arch;
++
++  [Description ("The guest's machine type")]
++  string Machine;
++
+ };
+ 
+ [Description (
+diff --git a/src/Virt_VSSD.c b/src/Virt_VSSD.c
+index 3363b38..67e56aa 100644
+--- a/src/Virt_VSSD.c
++++ b/src/Virt_VSSD.c
+@@ -121,6 +121,15 @@ static CMPIStatus _set_fv_prop(const CMPIBroker *broker,
+                 goto out;
+         }
+ 
++        if (dominfo->os_info.fv.arch != NULL)
++                CMSetProperty(inst, "Arch",
++                              (CMPIValue *)dominfo->os_info.fv.arch,
++                              CMPI_chars);
++
++        if (dominfo->os_info.fv.machine != NULL)
++                CMSetProperty(inst, "Machine",
++                              (CMPIValue *)dominfo->os_info.fv.machine,
++                              CMPI_chars);
+  out:
+         return s;
+ }
+diff --git a/src/Virt_VirtualSystemManagementService.c b/src/Virt_VirtualSystemManagementService.c
+index 8ced2d6..3df878f 100644
+--- a/src/Virt_VirtualSystemManagementService.c
++++ b/src/Virt_VirtualSystemManagementService.c
+@@ -543,6 +543,20 @@ static int fv_vssd_to_domain(CMPIInstance *inst,
+         if (!fv_set_emulator(domain, val))
+                 return 0;
+ 
++        free(domain->os_info.fv.arch);
++        ret = cu_get_str_prop(inst, "Arch", &val);
++        if (ret == CMPI_RC_OK)
++                domain->os_info.fv.arch = strdup(val);
++        else
++                domain->os_info.fv.arch = NULL;
++
++        free(domain->os_info.fv.machine);
++        ret = cu_get_str_prop(inst, "Machine", &val);
++        if (ret == CMPI_RC_OK)
++                domain->os_info.fv.machine = strdup(val);
++        else
++                domain->os_info.fv.machine = NULL;
++
+         return 1;
+ }
+ 
+-- 
+1.8.4.2
+
