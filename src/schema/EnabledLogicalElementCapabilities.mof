@@ -1,0 +1,28 @@
+// Copyright IBM Corp. 2007
+
+[Description (
+	"A class derived from CIM_Capabilities to represent "
+	"the changes that can be made to a started Xen virtual system"),
+ Provider("cmpi::Virt_EnabledLogicalElementCapabilities")
+]
+class Xen_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities
+{
+};
+
+[Description (
+	"A class derived from CIM_Capabilities to represent "
+	"the changes that can be made to a started KVM virtual system"),
+ Provider("cmpi::Virt_EnabledLogicalElementCapabilities")
+]
+class KVM_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities
+{
+};
+
+[Description (
+	"A class derived from CIM_Capabilities to represent "
+	"the changes that can be made to a started LXC virtual system"),
+ Provider("cmpi::Virt_EnabledLogicalElementCapabilities")
+]
+class LXC_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities
+{
+};

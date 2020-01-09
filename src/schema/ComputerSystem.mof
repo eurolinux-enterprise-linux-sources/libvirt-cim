@@ -1,0 +1,40 @@
+// Copyright IBM Corp. 2007
+
+[Description (
+	"A class derived from CIM_ComputerSystem to represent "
+	"the Xen virtual machines/domains running on the system."),
+ Provider("cmpi::Virt_ComputerSystem")
+]
+class Xen_ComputerSystem : CIM_ComputerSystem
+{
+   [Description("UUID assigned to this DomU.")]
+   string UUID;
+
+};
+
+[Description (
+	"A class derived from CIM_ComputerSystem to represent "
+	"the KVM virtual machines running on the system."),
+ Provider("cmpi::Virt_ComputerSystem")
+]
+class KVM_ComputerSystem : CIM_ComputerSystem
+{
+
+   [Description("UUID assigned to this virtual machine.")]
+   string UUID;
+
+};
+
+[Description (
+	"A class derived from CIM_ComputerSystem to represent "
+	"the LXC virtual machines running on the system."),
+ Provider("cmpi::Virt_ComputerSystem")
+]
+class LXC_ComputerSystem : CIM_ComputerSystem
+{
+
+   [Description("UUID assigned to this virtual machine.")]
+   string UUID;
+
+};
+

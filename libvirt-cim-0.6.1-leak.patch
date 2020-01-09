@@ -1,0 +1,62 @@
+commit d56411c2e2f5f59e3d7f277a6762c8c8b64ec750
+Author: Eduardo Lima (Etrunko) <eblima@br.ibm.com>
+Date:   Tue Mar 13 13:51:54 2012 +0800
+
+    Fix leaks detected by Coverity
+    
+    For https://bugzilla.redhat.com/show_bug.cgi?id=750418
+    Posted upstream by Eduardo but not yet commited
+
+diff --git a/libxkutil/misc_util.c b/libxkutil/misc_util.c
+index 61893c3..2d149ae 100644
+--- a/libxkutil/misc_util.c
++++ b/libxkutil/misc_util.c
+@@ -267,14 +267,14 @@ bool match_pn_to_cn(const char *pn, const char *cn)
+ 
+ uint64_t allocated_memory(virConnectPtr conn)
+ {
+-        virDomainPtr *list;
++        virDomainPtr *list = NULL;
+         int count;
+         int i;
+         uint64_t memory = 0;
+ 
+         count = get_domain_list(conn, &list);
+         if (count <= 0)
+-                return 0;
++                goto end;
+ 
+         for (i = 0; i < count; i ++) {
+                 virDomainPtr dom = list[i];
+@@ -286,8 +286,8 @@ uint64_t allocated_memory(virConnectPtr conn)
+                 virDomainFree(dom);
+         }
+ 
++ end:
+         free(list);
+-
+         return memory;
+ }
+ 
+diff --git a/src/Virt_AppliedFilterList.c b/src/Virt_AppliedFilterList.c
+index 538adf4..0dfe6a3 100644
+--- a/src/Virt_AppliedFilterList.c
++++ b/src/Virt_AppliedFilterList.c
+@@ -521,7 +521,7 @@ static CMPIStatus CreateInstance(
+         free(net_name);
+ 
+         cleanup_filters(&filter, 1);
+-        cleanup_virt_devices(&device, 1);
++        cleanup_dominfo(&dominfo);
+ 
+         virDomainFree(dom);
+         virConnectClose(conn);
+@@ -636,7 +636,7 @@ static CMPIStatus DeleteInstance(
+         free(net_name);
+ 
+         cleanup_filters(&filter, 1);
+-        cleanup_virt_devices(&device, 1);
++        cleanup_dominfo(&dominfo);
+ 
+         virDomainFree(dom);
+         virConnectClose(conn);

@@ -1,0 +1,22 @@
+// Copyright IBM Corp. 2007
+
+[Association,
+ Provider("cmpi::Virt_ElementAllocatedFromPool")
+]
+class Xen_ElementAllocatedFromPool : CIM_ElementAllocatedFromPool
+{
+};
+
+[Association,
+ Provider("cmpi::Virt_ElementAllocatedFromPool")
+]
+class KVM_ElementAllocatedFromPool : CIM_ElementAllocatedFromPool
+{
+};
+
+[Association,
+ Provider("cmpi::Virt_ElementAllocatedFromPool")
+]
+class LXC_ElementAllocatedFromPool : CIM_ElementAllocatedFromPool
+{
+};

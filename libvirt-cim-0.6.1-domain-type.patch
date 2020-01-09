@@ -1,0 +1,31 @@
+commit 06c7ed784a71358fff28ac3b37e2c2d88ce6998c
+Author: Wenchao Xia <xiawenc@linux.vnet.ibm.com>
+Date:   Mon Mar 25 18:35:44 2013 +0800
+
+    libxkutil: set domain->dype to unknown by default
+    
+      It should not be default as XENPV, which will bring trouble when this value is
+    not set. One case is script section in bridge xml generation, in resource add
+    method it will be always added since this value is XENPV, so change it to unknown.
+    
+    Signed-off-by: Wenchao Xia <xiawenc@linux.vnet.ibm.com>
+
+diff --git a/libxkutil/device_parsing.h b/libxkutil/device_parsing.h
+index d652f0f..6f6b0b4 100644
+--- a/libxkutil/device_parsing.h
++++ b/libxkutil/device_parsing.h
+@@ -147,10 +147,11 @@ struct lxc_os_info {
+ };
+ 
+ struct domain {
+-        enum { DOMAIN_XENPV, 
++        enum { DOMAIN_UNKNOWN,
++               DOMAIN_XENPV,
+                DOMAIN_XENFV, 
+-               DOMAIN_KVM, 
+-               DOMAIN_QEMU, 
++               DOMAIN_KVM,
++               DOMAIN_QEMU,
+                DOMAIN_LXC } type;
+         char *name;
+         char *typestr; /*xen, kvm, etc */

@@ -1,0 +1,5 @@
+# Copyright IBM Corp. 2007
+# Classname Namespace ProviderName ProviderModule ProviderTypes
+Xen_LogicalDisk root/virt Virt_Device Virt_Device instance
+KVM_LogicalDisk root/virt Virt_Device Virt_Device instance
+LXC_LogicalDisk root/virt Virt_Device Virt_Device instance

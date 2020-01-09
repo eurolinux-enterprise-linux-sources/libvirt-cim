@@ -1,0 +1,64 @@
+commit b9247cf08aac945432011274d7a2a3b44762bc58
+Author: John Ferlan <jferlan@redhat.com>
+Date:   Fri Mar 22 16:47:10 2013 -0400
+
+    xmlgen: Only support script on bridge for xen domains
+    
+      A change was made in 0.9.10 to disallow a script on a bridge device
+    for qemu guests, see 'libvirt' commit id '1734cdb99'.
+    
+    Signed-off-by: John Ferlan <jferlan@redhat.com>
+    Reviewed-by: Wenchao Xia <xiawenc@linux.vnet.ibm.com>
+    Signed-off-by: Wenchao Xia <xiawenc@linux.vnet.ibm.com>
+
+diff --git a/libxkutil/xmlgen.c b/libxkutil/xmlgen.c
+index 2dcd0d2..94fb7d3 100644
+--- a/libxkutil/xmlgen.c
++++ b/libxkutil/xmlgen.c
+@@ -270,16 +270,22 @@ static const char *set_net_source(xmlNodePtr nic,
+ }
+ 
+ 
+-static const char *bridge_net_to_xml(xmlNodePtr nic, struct net_device *dev)
++static const char *bridge_net_to_xml(xmlNodePtr nic, struct net_device *dev,
++                                     int domtype)
+ {
+         const char *script = "vif-bridge";
+         xmlNodePtr tmp;
+         const char *msg = NULL;
+ 
+-        tmp = xmlNewChild(nic, NULL, BAD_CAST "script", NULL);
+-        if (tmp == NULL)
+-                return XML_ERROR;
+-        xmlNewProp(tmp, BAD_CAST "path", BAD_CAST script);
++       /* Scripts only supported on Xen guests see 'libvirt'
++        * commit id 1734cdb99 (since 0.9.10) */
++       if (domtype == DOMAIN_XENPV || domtype == DOMAIN_XENFV) {
++            tmp = xmlNewChild(nic, NULL, BAD_CAST "script", NULL);
++            if (tmp == NULL) {
++                    return XML_ERROR;
++            }
++            xmlNewProp(tmp, BAD_CAST "path", BAD_CAST script);
++       }
+ 
+         msg = set_net_source(nic, dev, "bridge");
+ 
+@@ -375,13 +381,13 @@ static const char *net_xml(xmlNodePtr root, struct domain *dominfo)
+                 }
+ #endif
+ 
+-                if (STREQ(dev->dev.net.type, "network"))
++                if (STREQ(dev->dev.net.type, "network")) {
+                         msg = set_net_source(nic, net, "network");
+-                else if (STREQ(dev->dev.net.type, "bridge"))
+-                        msg = bridge_net_to_xml(nic, net);
+-                else if (STREQ(dev->dev.net.type, "user"))
++                } else if (STREQ(dev->dev.net.type, "bridge")) {
++                        msg = bridge_net_to_xml(nic, net, dominfo->type);
++                } else if (STREQ(dev->dev.net.type, "user")) {
+                         continue;
+-                else if (STREQ(dev->dev.net.type, "direct")) {
++                } else if (STREQ(dev->dev.net.type, "direct")) {
+                         msg = set_net_source(nic, net, "direct");
+                         if (net->vsi.vsi_type != NULL) {
+                                 struct vsi_device *vsi = &dev->dev.net.vsi;

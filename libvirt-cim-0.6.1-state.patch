@@ -1,0 +1,142 @@
+commit c0937ee29309bdf102867cd475292b0947e13e69
+Author: Wenchao Xia <xiawenc@linux.vnet.ibm.com>
+Date:   Thu Jun 28 14:55:24 2012 +0800
+
+    distinguish running or inactive state
+    
+      In older version of libvirt-cim, it calls libvirt with current vm state. With
+    ACL patch it changed to call libvirt with inactive vm state. This will cause
+    libvirt-cim show different behavior about running vm compared to old
+    libvirt-cim. For eg, if vnc port that was defined as automatically allocation,
+    after vm power up, user can't get what port is allocated by the system. This
+    patch changed this back as a fix, except for FilterList.
+    v2: expose flags in API.
+    
+    Signed-off-by: Wenchao Xia <xiawenc@linux.vnet.ibm.com>
+
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index f153c5b..5393290 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -997,13 +997,13 @@ static int _get_proc_device(const char *xml, struct virt_device **list)
+         return 1;
+ };
+ 
+-int get_devices(virDomainPtr dom, struct virt_device **list, int type)
++int get_devices(virDomainPtr dom, struct virt_device **list, int type,
++                                                    unsigned int flags)
+ {
+         char *xml;
+         int ret;
+ 
+-        xml = virDomainGetXMLDesc(dom,
+-                VIR_DOMAIN_XML_INACTIVE | VIR_DOMAIN_XML_SECURE);
++        xml = virDomainGetXMLDesc(dom, VIR_DOMAIN_XML_SECURE | flags);
+         if (xml == NULL)
+                 return 0;
+ 
+diff --git a/libxkutil/device_parsing.h b/libxkutil/device_parsing.h
+index b3b75a9..d652f0f 100644
+--- a/libxkutil/device_parsing.h
++++ b/libxkutil/device_parsing.h
+@@ -203,7 +203,9 @@ int get_dominfo_from_xml(const char *xml, struct domain **dominfo);
+ 
+ void cleanup_dominfo(struct domain **dominfo);
+ 
+-int get_devices(virDomainPtr dom, struct virt_device **list, int type);
++/* VIR_DOMAIN_XML_SECURE will always be set besides flags */
++int get_devices(virDomainPtr dom, struct virt_device **list, int type,
++                                                    unsigned int flags);
+ 
+ void cleanup_virt_device(struct virt_device *dev);
+ void cleanup_virt_devices(struct virt_device **devs, int count);
+diff --git a/src/Virt_AppliedFilterList.c b/src/Virt_AppliedFilterList.c
+index 0dfe6a3..c59c11f 100644
+--- a/src/Virt_AppliedFilterList.c
++++ b/src/Virt_AppliedFilterList.c
+@@ -200,7 +200,8 @@ static CMPIStatus list_to_net(
+         for (i = 0; i < dcount; i++) {
+                 /* get domain's network devices */
+                 struct virt_device *devices = NULL;
+-                ncount = get_devices(doms[i], &devices, CIM_RES_TYPE_NET);
++                ncount = get_devices(doms[i], &devices, CIM_RES_TYPE_NET,
++                                                    VIR_DOMAIN_XML_INACTIVE);
+ 
+                 CU_DEBUG("Found %u network devices", ncount);
+ 
+@@ -300,7 +301,8 @@ static CMPIStatus net_to_list(
+ 
+         /* get domain's network devices */
+         struct virt_device *devices = NULL;
+-        int count = get_devices(dom, &devices, CIM_RES_TYPE_NET);
++        int count = get_devices(dom, &devices, CIM_RES_TYPE_NET,
++                                                   VIR_DOMAIN_XML_INACTIVE);
+ 
+         CU_DEBUG("Found %u net devices on dom '%s'", count, domain_name);
+ 
+diff --git a/src/Virt_Device.c b/src/Virt_Device.c
+index abe3d6f..e047a94 100644
+--- a/src/Virt_Device.c
++++ b/src/Virt_Device.c
+@@ -529,7 +529,7 @@ static CMPIStatus _get_devices(const CMPIBroker *broker,
+         bool rc;
+         struct virt_device *devs = NULL;
+ 
+-        count = get_devices(dom, &devs, type);
++        count = get_devices(dom, &devs, type, 0);
+         if (count <= 0)
+                 goto out;
+ 
+@@ -698,7 +698,7 @@ static struct virt_device *find_dom_dev(virDomainPtr dom,
+         int count;
+         int i;
+ 
+-        count = get_devices(dom, &list, type);
++        count = get_devices(dom, &list, type, 0);
+         if (!count) {
+                 CU_DEBUG("No devices for %i", type);
+                 goto out;
+diff --git a/src/Virt_DevicePool.c b/src/Virt_DevicePool.c
+index def8454..202e509 100644
+--- a/src/Virt_DevicePool.c
++++ b/src/Virt_DevicePool.c
+@@ -446,7 +446,7 @@ static char *diskpool_member_of(const CMPIBroker *broker,
+         if (dom == NULL)
+                 goto out;
+ 
+-        count = get_devices(dom, &devs, CIM_RES_TYPE_DISK);
++        count = get_devices(dom, &devs, CIM_RES_TYPE_DISK, 0);
+ 
+         for (i = 0; i < count; i++) {
+                 if (STREQ((devs[i].dev.disk.virtual_dev), dev)) {
+@@ -578,7 +578,7 @@ static char *netpool_member_of(const CMPIBroker *broker,
+         if (dom == NULL)
+                 goto out;
+ 
+-        count = get_devices(dom, &devs, CIM_RES_TYPE_NET);
++        count = get_devices(dom, &devs, CIM_RES_TYPE_NET, 0);
+ 
+         for (i = 0; i < count; i++) {
+                 if (STREQ((devs[i].id), dev)) {
+diff --git a/src/Virt_RASD.c b/src/Virt_RASD.c
+index 3ac4cf5..9493077 100644
+--- a/src/Virt_RASD.c
++++ b/src/Virt_RASD.c
+@@ -81,7 +81,7 @@ int list_rasds(virConnectPtr conn,
+         if (dom == NULL)
+                 return 0;
+ 
+-        count = get_devices(dom, list, type);
++        count = get_devices(dom, list, type, 0);
+ 
+         virDomainFree(dom);
+ 
+@@ -965,7 +965,7 @@ static CMPIStatus _get_rasds(const CMPIBroker *broker,
+         struct virt_device *devs = NULL;
+         const char *host = NULL;
+ 
+-        count = get_devices(dom, &devs, type);
++        count = get_devices(dom, &devs, type, 0);
+         if (count <= 0)
+                 goto out;
+ 

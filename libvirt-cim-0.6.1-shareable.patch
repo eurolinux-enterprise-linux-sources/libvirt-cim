@@ -1,0 +1,170 @@
+commit 95c98cd378a0c47961dd416efe0f277a90e499cc
+Author: Xu Wang <cngesaint@gmail.com>
+Date:   Wed Jul 24 10:49:19 2013 +0800
+
+    Add shareable property to disk
+    
+    This patch adds shareable property to disks.
+    
+    Signed-off-by: Xu Wang <cngesaint@gmail.com>
+
+diff --git a/schema/ResourceAllocationSettingData.mof b/schema/ResourceAllocationSettingData.mof
+index 3da503d..034539f 100644
+--- a/schema/ResourceAllocationSettingData.mof
++++ b/schema/ResourceAllocationSettingData.mof
+@@ -28,6 +28,9 @@ class Xen_DiskResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+ 
+       [Description ("cache setting for device")]
+       string DriverCache;
++
++      [Description ("if device is shareable")]
++      boolean shareable;
+ };
+ 
+ [Description ("KVM virtual disk configuration"),
+@@ -58,6 +61,9 @@ class KVM_DiskResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+ 
+       [Description ("cache setting for device")]
+       string DriverCache;
++
++      [Description ("if device is shareable")]
++      boolean shareable;
+ };
+ 
+ [Description ("LXC virtual disk configuration"),
+diff --git a/src/Virt_RASD.c b/src/Virt_RASD.c
+index 4939f7b..8a3db11 100644
+--- a/src/Virt_RASD.c
++++ b/src/Virt_RASD.c
+@@ -406,6 +406,12 @@ static CMPIStatus set_disk_rasd_params(const CMPIBroker *broker,
+                               (CMPIValue *)dev->dev.disk.cache,
+                               CMPI_chars);
+ 
++        if(dev->dev.disk.shareable)
++                CMSetProperty(inst,
++                              "shareable",
++                              (CMPIValue *)&(dev->dev.disk.shareable),
++                              CMPI_boolean);
++
+         virStoragePoolFree(pool);
+         virStorageVolFree(vol);
+         virConnectClose(conn);
+diff --git a/src/Virt_SettingsDefineCapabilities.c b/src/Virt_SettingsDefineCapabilities.c
+index 9eb9e57..dc89b6b 100644
+--- a/src/Virt_SettingsDefineCapabilities.c
++++ b/src/Virt_SettingsDefineCapabilities.c
+@@ -1037,6 +1037,7 @@ static CMPIStatus set_disk_props(int type,
+                                  uint64_t disk_size,
+                                  uint16_t emu_type,
+                                  bool readonly,
++                                 bool shareable,
+                                  const char *cache,
+                                  struct inst_list *list)
+ {
+@@ -1085,6 +1086,10 @@ static CMPIStatus set_disk_props(int type,
+                         CMSetProperty(inst, "readonly",
+                                       (CMPIValue *)&readonly, CMPI_boolean);
+ 
++                if(shareable)
++                        CMSetProperty(inst, "shareable",
++                                      (CMPIValue *)&shareable, CMPI_boolean);
++
+                 if(cache != NULL)
+                         CMSetProperty(inst, "cache",
+                                       (CMPIValue *)cache, CMPI_chars);
+@@ -1109,6 +1114,7 @@ static CMPIStatus cdrom_or_floppy_template(const CMPIObjectPath *ref,
+         const char *dev_str = NULL;
+         char *id_str = NULL;
+         bool readonly = true;
++        bool shareable = false;
+         const char *cache = "none";
+ 
+         if (emu_type == VIRT_DISK_TYPE_CDROM)
+@@ -1156,6 +1162,7 @@ static CMPIStatus cdrom_or_floppy_template(const CMPIObjectPath *ref,
+                                            vol_size,
+                                            emu_type,
+                                            readonly,
++                                           shareable,
+                                            cache,
+                                            list);
+                 }
+@@ -1167,6 +1174,7 @@ static CMPIStatus cdrom_or_floppy_template(const CMPIObjectPath *ref,
+                                    vol_size,
+                                    emu_type,
+                                    readonly,
++                                   shareable,
+                                    cache,
+                                    list);
+ 
+@@ -1242,6 +1250,7 @@ static CMPIStatus default_disk_template(const CMPIObjectPath *ref,
+         int type = 0;
+         bool ret;
+         bool readonly = true;
++        bool shareable = false;
+         const char *cache = "none";
+ 
+         CMPIStatus s = {CMPI_RC_OK, NULL};
+@@ -1294,6 +1303,7 @@ static CMPIStatus default_disk_template(const CMPIObjectPath *ref,
+                                            disk_size,
+                                            emu_type,
+                                            readonly,
++                                           shareable,
+                                            cache,
+                                            list);
+                         if (s.rc != CMPI_RC_OK)
+@@ -1315,6 +1325,7 @@ static CMPIStatus default_disk_template(const CMPIObjectPath *ref,
+                                    disk_size,
+                                    emu_type,
+                                    readonly,
++                                   shareable,
+                                    cache,
+                                    list);
+         }
+@@ -1442,6 +1453,7 @@ static CMPIStatus avail_volume_template(const CMPIObjectPath *ref,
+         int ret;
+         uint16_t emu_type = 0;
+         bool readonly = false;
++        bool shareable = false;
+         const char *cache = "none";
+ 
+         ret = virStorageVolGetInfo(volume_ptr, &vol_info);
+@@ -1500,6 +1512,7 @@ static CMPIStatus avail_volume_template(const CMPIObjectPath *ref,
+                                            vol_size,
+                                            emu_type,
+                                            readonly,
++                                           shareable,
+                                            cache,
+                                            list);
+                 }
+@@ -1511,6 +1524,7 @@ static CMPIStatus avail_volume_template(const CMPIObjectPath *ref,
+                                    vol_size,
+                                    emu_type,
+                                    readonly,
++                                   shareable,
+                                    cache,
+                                    list);
+         } else {
+diff --git a/src/Virt_VirtualSystemManagementService.c b/src/Virt_VirtualSystemManagementService.c
+index 6f42c42..d8808fb 100644
+--- a/src/Virt_VirtualSystemManagementService.c
++++ b/src/Virt_VirtualSystemManagementService.c
+@@ -935,6 +935,7 @@ static const char *disk_rasd_to_vdev(CMPIInstance *inst,
+         const char *val = NULL;
+         uint16_t type;
+         bool read = false;
++        bool shareable = false;
+ 
+         CU_DEBUG("Enter disk_rasd_to_vdev");
+         if (cu_get_str_prop(inst, "VirtualDevice", &val) != CMPI_RC_OK)
+@@ -1007,6 +1008,11 @@ static const char *disk_rasd_to_vdev(CMPIInstance *inst,
+         else
+                 dev->dev.disk.cache = strdup(val);
+ 
++        if (cu_get_bool_prop(inst, "shareable", &shareable) != CMPI_RC_OK)
++                dev->dev.disk.shareable = false;
++        else
++                dev->dev.disk.shareable = shareable;
++
+         free(dev->id);
+         dev->id = strdup(dev->dev.disk.virtual_dev);
+ 

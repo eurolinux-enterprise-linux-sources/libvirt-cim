@@ -1,0 +1,8 @@
+# Copyright IBM Corp. 2007
+# Classname Namespace ProviderName ProviderModule ProviderTypes
+Xen_HostedDependency root/virt Virt_HostedDependency Virt_HostedDependency association
+KVM_HostedDependency root/virt Virt_HostedDependency Virt_HostedDependency association
+LXC_HostedDependency root/virt Virt_HostedDependency Virt_HostedDependency association
+Xen_HostedDependency root/cimv2 Virt_HostedDependency Virt_HostedDependency association
+KVM_HostedDependency root/cimv2 Virt_HostedDependency Virt_HostedDependency association
+LXC_HostedDependency root/cimv2 Virt_HostedDependency Virt_HostedDependency association

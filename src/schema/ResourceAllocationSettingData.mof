@@ -1,0 +1,438 @@
+// Copyright IBM Corp. 2007
+
+[Description ("Xen virtual disk configuration"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_DiskResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+
+      [Description ("Device as seen by the guest")]
+      string VirtualDevice;
+
+      [Description ("Device emulation type"),
+        ValueMap {"0", "1", "2"},
+        Values {"Disk", "CDROM", "floppy"}]
+      uint16 EmulatedType;
+
+      [Description ("Bus type of the device")]
+      string BusType;
+
+      [Description ("readonly mode for disk")]
+      boolean readonly;
+
+      [Description ("Primary backend driver name")]
+      string DriverName;
+
+      [Description ("Optional subtype backend driver")]
+      string DriverType;
+
+      [Description ("cache setting for device")]
+      string DriverCache;
+};
+
+[Description ("KVM virtual disk configuration"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_DiskResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+
+      [Description ("Device as seen by the guest")]
+      string VirtualDevice;
+
+      [Description ("Device emulation type"),
+        ValueMap {"0", "1", "2"},
+        Values {"Disk", "CDROM", "floppy"}]
+      uint16 EmulatedType;
+
+      [Description ("Bus type of the device")]
+      string BusType;
+
+      [Description ("readonly mode for disk")]
+      boolean readonly;
+
+      [Description ("Primary backend driver name")]
+      string DriverName;
+
+      [Description ("Optional subtype backend driver")]
+      string DriverType;
+
+      [Description ("cache setting for device")]
+      string DriverCache;
+};
+
+[Description ("LXC virtual disk configuration"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_DiskResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+
+      [Description ("Mount point within the container")]
+      string MountPoint;
+
+};
+
+[Description ("Xen virtual network configuration"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_NetResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+
+      [Description ("Interface type")]
+      string NetworkType;
+
+      [Description ("Bridge name")]
+      string NetworkName;
+
+      [Description ("Target device as seen by the guest")]
+      string VirtualDevice;
+
+      [Description ("Source Device for bridge mode")]
+      string SourceDevice;
+
+      [Description ("Network mode, could be 'vepa', 'pepa' etc.")]
+      string NetworkMode;
+
+      [Description ("VSI type")]
+      string VSIType;
+
+      [Description ("VSI manager id")]
+      string VSIManagerID;
+
+      [Description ("VSI type")]
+      string VSITypeID;
+
+      [Description ("expected/desired version of VTID")]
+      string VSITypeIDVersion;
+
+      [Description ("A globally unique ID for the connection instance."
+                   " The ID shall be done consistent with IETF RFC 4122.")]
+      string VSIInstanceID;
+
+      [Description ("Profile ID")]
+      string ProfileID;
+
+      [Description ("Filter REF")]
+      string FilterRef;
+
+};
+
+[Description ("KVM virtual network configuration"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_NetResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+
+      [Description ("Interface type")]
+      string NetworkType;
+
+      [Description ("Bridge name")]
+      string NetworkName;
+
+      [Description ("Target device as seen by the guest")]
+      string VirtualDevice;
+
+      [Description ("Source Device for bridge mode")]
+      string SourceDevice;
+
+      [Description ("Network mode, could be 'vepa', 'pepa' etc.")]
+      string NetworkMode;
+
+      [Description ("VSI type")]
+      string VSIType;
+
+      [Description ("VSI manager id")]
+      string VSIManagerID;
+
+      [Description ("VSI type")]
+      string VSITypeID;
+
+      [Description ("expected/desired version of VTID")]
+      string VSITypeIDVersion;
+
+      [Description ("A globally unique ID for the connection instance."
+                   " The ID shall be done consistent with IETF RFC 4122.")]
+      string VSIInstanceID;
+
+      [Description ("Profile ID")]
+      string ProfileID;
+
+      [Description ("Filter REF")]
+      string FilterRef;
+};
+
+[Description ("LXC virtual network configuration"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_NetResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+      [Description ("Target device as seen by the guest")]
+      string VirtualDevice;
+};
+
+[Description ("Xen virtual processor"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_ProcResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+};
+
+[Description ("KVM virtual processor"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_ProcResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+};
+
+[Description ("LXC virtual processor"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_ProcResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+};
+
+[Description ("Xen virtual memory"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_MemResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+};
+
+[Description ("KVM virtual memory"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_MemResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+};
+
+[Description ("LXC virtual memory"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_MemResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+};
+
+[Description ("Xen virtual graphics device"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_GraphicsResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+      [Description ("If ResourceSubType is 'vnc', this is a VNC Address. "
+       "IPv4 in a.b.c.d:port or IPv6 in [ip]:port format. If ResourceSubType "
+       "is 'console', this is a character device path in "
+       "path:port format (e.g., '/dev/pts/3:0'\) "
+       "if ResourceSubType is 'sdl', this is a combination of its params as "
+       "xauth:display (e.g., '/root/.Xauthority::0'\)")]
+      string Address;
+
+      [Description ("Keyboard keymapping")]
+      string KeyMap;
+
+      [Description ("VNC password")]
+      string Password;
+
+      [Description ("Is IPv6 only addressing is to be used."
+      "if ResourceSubType is 'sdl', this means whether sdl is fullscreen")]
+      boolean IsIPv6Only;
+};
+
+[Description ("KVM virtual graphics device"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_GraphicsResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+      [Description ("If ResourceSubType is 'vnc', this is a VNC Address. "
+       "IPv4 in a.b.c.d:port or IPv6 in [ip]:port format. If ResourceSubType "
+       "is 'console', this is a character device path in "
+       "path:port format (e.g., '/dev/pts/3:0'\)")]
+      string Address;
+
+      [Description ("Keyboard keymapping")]
+      string KeyMap;
+
+      [Description ("VNC password")]
+      string Password;
+
+      [Description ("Is IPv6 only addressing is to be used")]
+      boolean IsIPv6Only;
+};
+
+[Description ("LXC virtual graphics device"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_GraphicsResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+      [Description ("If ResourceSubType is 'vnc', this is a VNC Address. "
+       "IPv4 in a.b.c.d:port or IPv6 in [ip]:port format. If ResourceSubType "
+       "is 'console', this is a character device path in "
+       "path:port format (e.g., '/dev/pts/3:0'\)")]
+      string Address;
+
+      [Description ("Keyboard keymapping")]
+      string KeyMap;
+
+      [Description ("VNC password")]
+      string Password;
+
+      [Description ("Is IPv6 only addressing is to be used")]
+      boolean IsIPv6Only;
+};
+
+[Description ("Xen virtual input device"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_InputResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+      string BusType;
+};
+
+[Description ("KVM virtual input device"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_InputResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+      string BusType;
+};
+
+[Description ("LXC virtual input device"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_InputResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+      string BusType;
+};
+
+[Description ("Xen virtual network pool settings"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_NetPoolResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+      string Netmask;
+      string IPRangeStart;
+      string IPRangeEnd;
+      string ForwardDevice;
+
+      [Description ("Network pool forwarding mode"),
+        ValueMap {"0", "1", "2"},
+        Values {"None", "NAT", "Routed"}]
+      uint16 ForwardMode;
+};
+
+[Description ("KVM virtual network pool settings"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_NetPoolResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+      string Netmask;
+      string IPRangeStart;
+      string IPRangeEnd;
+      string ForwardDevice;
+
+      [Description ("Network pool forwarding mode"),
+        ValueMap {"0", "1", "2"},
+        Values {"None", "NAT", "Routed"}]
+      uint16 ForwardMode;
+};
+
+[Description ("LXC virtual network pool settings"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_NetPoolResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+      string Netmask;
+      string IPRangeStart;
+      string IPRangeEnd;
+      string ForwardDevice;
+
+      [Description ("Network pool forwarding mode"),
+        ValueMap {"0", "1", "2"},
+        Values {"None", "NAT", "Routed"}]
+      uint16 ForwardMode;
+};
+
+[Description ("Xen virtual disk pool settings"),
+ Provider("cmpi::Virt_RASD")
+]
+class Xen_DiskPoolResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+      [Description ("Storage pool type"),
+        ValueMap {"0", "1", "2", "3", "4", "5", "6", "7"},
+        Values {"Unknown", "Directory, File System, Network File System, "
+                "Disk, ISCSI, Logical, SCSI Host Bus Adapter"}]
+      uint16 Type;
+      uint16 Autostart;
+      string Path;
+      string DevicePaths[];
+      string Host;
+      string SourceDirectory;
+      string AdapterName;
+      string PortName;
+      string NodeName;
+};
+
+[Description ("KVM virtual disk pool settings"),
+ Provider("cmpi::Virt_RASD")
+]
+class KVM_DiskPoolResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+      [Description ("Storage pool type"),
+        ValueMap {"0", "1", "2", "3", "4", "5", "6", "7"},
+        Values {"Unknown", "Directory, File System, Network File System, "
+                "Disk, ISCSI, Logical, SCSI Host Bus Adapter"}]
+      uint16 Type;
+      uint16 Autostart;
+      string Path;
+      string DevicePaths[];
+      string Host;
+      string SourceDirectory;
+      string AdapterName;
+      string PortName;
+      string NodeName;
+};
+
+[Description ("LXC virtual disk pool settings"),
+ Provider("cmpi::Virt_RASD")
+]
+class LXC_DiskPoolResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+{
+      [Description ("Storage pool type"),
+        ValueMap {"0", "1", "2", "3", "4", "5", "6", "7"},
+        Values {"Unknown", "Directory, File System, Network File System, "
+                "Disk, ISCSI, Logical, SCSI Host Bus Adapter"}]
+      uint16 Type;
+      uint16 Autostart;
+      string Path;
+      string DevicePaths[];
+      string Host;
+      string SourceDirectory;
+      string AdapterName;
+      string PortName;
+      string NodeName;
+};
+
+
+[Description ("Xen storage volume settings"),
+ Provider("cmpi::Virt_SettingsDefineCapabilities")
+]
+class Xen_StorageVolumeResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+{
+      string VolumeName;
+      string Path;
+      uint16 FormatType;
+      uint16 AllocationQuantity;
+      uint16 Capacity;
+      string AllocationUnits;
+};
+
+[Description ("KVM storage volume settings"),
+ Provider("cmpi::Virt_SettingsDefineCapabilities")
+]
+class KVM_StorageVolumeResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+{
+      string VolumeName;
+      string Path;
+      uint16 FormatType;
+      uint16 AllocationQuantity;
+      uint16 Capacity;
+      string AllocationUnits;
+};
+

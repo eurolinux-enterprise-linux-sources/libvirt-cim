@@ -1,0 +1,23 @@
+// Copyright IBM Corp. 2007
+
+[Association,
+ Provider("cmpi::Virt_SettingsDefineCapabilities")
+]
+class Xen_SettingsDefineCapabilities : CIM_SettingsDefineCapabilities
+{
+};
+
+[Association,
+ Provider("cmpi::Virt_SettingsDefineCapabilities")
+]
+class KVM_SettingsDefineCapabilities : CIM_SettingsDefineCapabilities
+{
+};
+
+[Association,
+ Provider("cmpi::Virt_SettingsDefineCapabilities")
+]
+class LXC_SettingsDefineCapabilities : CIM_SettingsDefineCapabilities
+{
+};
+

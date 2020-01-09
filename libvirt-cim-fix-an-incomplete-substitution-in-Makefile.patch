@@ -1,0 +1,30 @@
+From 66a84c1439ea4c2e6f0398e636f06cd8f634ffba Mon Sep 17 00:00:00 2001
+From: Klaus Kaempf <kkaempf@suse.de>
+Date: Tue, 10 Jul 2012 14:35:21 +0800
+Subject: [PATCH] Fix an incomplete substitution in Makefile
+
+https://bugzilla.redhat.com/show_bug.cgi?id=805892
+
+This led to a failure to build if sblim-sfcb is installed
+(cherry picked from commit 9f5e204f6d8bca958f69891568e959d7c3611096)
+
+---
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 94dc5f3..0fdd8bb 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -189,7 +189,7 @@ install-data-local:
+ 	$(install_sh_DATA) -t "$(DESTDIR)$(pkgdatadir)" $(INTEROP_MOFS)
+ 	$(install_sh_DATA) -t "$(DESTDIR)$(pkgdatadir)" $(INTEROP_REGS)
+ 	if [[ @CIMSERVER@ != pegasus ]]; then \
+-	sed -i '/^# --/,/^# --!/d' $(subst schema,$(DESTDIR)$(pkgdatadir), $(PGINTEROP_REGS)); \
++	sed -i '/^# --/,/^# --!/d' $(subst ./schema,$(DESTDIR)$(pkgdatadir), $(PGINTEROP_REGS)); \
+ 	fi
+ 
+ uninstall-local:
+-- 
+1.7.12.3
+

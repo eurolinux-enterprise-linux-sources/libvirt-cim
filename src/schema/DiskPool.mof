@@ -1,0 +1,35 @@
+// Copyright IBM Corp. 2007
+
+[Provider("cmpi::Virt_DevicePool")]
+class Xen_DiskPool : CIM_ResourcePool
+{
+  [Description("Path this storage pool represents")]
+  string Path;
+  uint16 Autostart;
+  string Host;
+  string SourceDirectory;
+
+};
+
+[Provider("cmpi::Virt_DevicePool")]
+class KVM_DiskPool : CIM_ResourcePool
+{
+  [Description("Path this storage pool represents")]
+  string Path;
+  uint16 Autostart;
+  string Host;
+  string SourceDirectory;
+
+};
+
+[Provider("cmpi::Virt_DevicePool")]
+class LXC_DiskPool : CIM_ResourcePool
+{
+  [Description("Path this storage pool represents")]
+  string Path;
+  uint16 Autostart;
+  string Host;
+  string SourceDirectory;
+
+};
+
