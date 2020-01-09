@@ -3,7 +3,7 @@
 Summary: A CIM provider for libvirt
 Name: libvirt-cim
 Version: 0.6.1
-Release: 4%{?dist}.2%{?extra_release}
+Release: 9%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
 Source: ftp://libvirt.org/libvirt-cim/libvirt-cim-%{version}.tar.gz
@@ -23,9 +23,10 @@ Patch1: libvirt-cim-fix-an-incomplete-substitution-in-Makefile.patch
 Patch2: libvirt-cim-0.6.1-state.patch
 Patch3: libvirt-cim-0.6.1-bridge.patch
 Patch4: libvirt-cim-0.6.1-domain-type.patch
-Patch5: libvirt-cim-0.6.1-shareable.patch
-Patch6: libvirt-cim-0.6.1-dumpCore.patch
-Patch7: libvirt-cim-0.6.1-use-top_srcdir-in-Makefile.patch
+Patch5: libvirt-cim-get_dominfo-Use-VIR_DOMAIN_XML_SECURE-more-wisely.patch
+Patch6: libvirt-cim-0.6.1-shareable.patch
+Patch7: libvirt-cim-0.6.1-dumpCore.patch
+Patch8: libvirt-cim-0.6.1-use-top_srcdir-in-Makefile.patch
 
 # In RHEL5 uuid-devel is provided by e2fsprogs
 %if 0%{?el5}
@@ -59,6 +60,7 @@ platforms with a single provider.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 %build
 # Rebuild makefiles changed by Patch1
@@ -237,17 +239,24 @@ fi
 %config(noreplace) %{_sysconfdir}/libvirt-cim.conf
 
 %changelog
-* Tue Sep 17 2013 John Ferlan <jferlan@redhat.com> - 0.6.1-4.el6_4.2
-- Add shareable property to disk and dumpCore tag support (rhbz#1009117)
+* Wed Aug 28 2013 John Ferlan <jferlan@redhat.com> - 0.6.1-9.el6
+- Add shareable property to disk and dumpCore tag support (rhbz#1000937)
 - Update spec file to more closely match upstream
-- Uninstall open-pegasus-specific providers from sfcb.eml (rhbz#833633)
-- Don't install open-pegasus' specific providers (rhbz#859122)
 - Fixed dates in changelog
 
-* Fri May 24 2013 John Ferlan <jferlan@redhat.com> - 0.6.1-4.el6_4.1
+* Thu Aug 22 2013 Michal Privoznik <mprivozn@redhat.com> - 0.6.1-8.el6
+- Uninstall open-pegasus-specific providers from sfcb.eml (rhbz#833633)
+
+* Fri Aug 09 2013 Michal Privoznik <mprivozn@redhat.com> - 0.6.1-7.el6
+- libvirt-cim-get_dominfo-Use-VIR_DOMAIN_XML_SECURE-more-wisely.patch (rhbz#826179)
+- Don't install open-pegasus' specific providers (rhbz#859122)
+
+* Tue May 21 2013 John Ferlan <jferlan@redhat.com> - 0.6.1-6
+- Force domain->type default to be UNKNOWN
+
+* Wed May 15 2013 John Ferlan <jferlan@redhat.com> - 0.6.1-5
 - Distinguish running or inactive state (rhbz#913164)
-- Only support script on bridge for xen domains (rhbz#951402)
-- Need to initialize domain->type to UNKNOWN (rhbz#951402)
+- Only support script on bridge for xen domains (rhbz#908083)
 
 * Fri Oct 12 2012 Jiri Denemark <jdenemar@redhat.com> - 0.6.1-4.el6
 - Fix an incomplete substitution in Makefile (rhbz#805892)

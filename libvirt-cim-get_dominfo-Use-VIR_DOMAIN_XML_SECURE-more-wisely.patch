@@ -1,0 +1,83 @@
+From 011b494eef9bfff3a07b06f464b19f2a8cfc6065 Mon Sep 17 00:00:00 2001
+Message-Id: <011b494eef9bfff3a07b06f464b19f2a8cfc6065.1376039318.git.mprivozn@redhat.com>
+From: Michal Privoznik <mprivozn@redhat.com>
+Date: Tue, 6 Aug 2013 14:41:33 +0200
+Subject: [PATCH] get_dominfo: Use VIR_DOMAIN_XML_SECURE more wisely
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+https://bugzilla.redhat.com/show_bug.cgi?id=826179
+
+Currently, even if we are connected RO to the libvirtd, we try to dump
+domain XML with secure information (VIR_DOMAIN_XML_SECURE flag). This
+is, however, forbidden in libvirt. With RO connection, we should not use
+the SECURE flag at all.
+(cherry picked from commit 7e164fbdac05e955fe21c5bacc4aeee171821fd5)
+
+Conflicts:
+	libxkutil/misc_util.c: Context
+	libxkutil/misc_util.h: Context
+---
+ libxkutil/device_parsing.c | 9 +++++++--
+ libxkutil/misc_util.c      | 2 +-
+ libxkutil/misc_util.h      | 3 +++
+ 3 files changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index f7b9064..0fdbc0c 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -31,6 +31,7 @@
+ #include <libcmpiutil/libcmpiutil.h>
+ 
+ #include "device_parsing.h"
++#include "misc_util.h"
+ #include "xmlgen.h"
+ #include "../src/svpc_types.h"
+ 
+@@ -1242,8 +1243,12 @@ int get_dominfo(virDomainPtr dom, struct domain **dominfo)
+         char *xml;
+         int ret;
+         int start;
+-        xml = virDomainGetXMLDesc(dom,
+-                VIR_DOMAIN_XML_INACTIVE | VIR_DOMAIN_XML_SECURE);
++        int flags = VIR_DOMAIN_XML_INACTIVE;
++
++        if (!is_read_only())
++            flags |= VIR_DOMAIN_XML_SECURE;
++
++        xml = virDomainGetXMLDesc(dom, flags);
+ 
+         if (xml == NULL)
+                 return 0;
+diff --git a/libxkutil/misc_util.c b/libxkutil/misc_util.c
+index 2d149ae..2691a6f 100644
+--- a/libxkutil/misc_util.c
++++ b/libxkutil/misc_util.c
+@@ -106,7 +106,7 @@ static const char *cn_to_uri(const char *classname)
+                 return NULL;
+ }
+ 
+-static int is_read_only(void)
++int is_read_only(void)
+ {
+         int readonly = 0;
+ 
+diff --git a/libxkutil/misc_util.h b/libxkutil/misc_util.h
+index c7a2122..849a722 100644
+--- a/libxkutil/misc_util.h
++++ b/libxkutil/misc_util.h
+@@ -151,6 +151,9 @@ int virt_set_status(const CMPIBroker *broker,
+ 
+ #define REF2STR(r) CMGetCharPtr(CMObjectPathToString(r, NULL))
+ 
++/* get libvirt-cim config */
++int is_read_only(void);
++
+ /*
+  * Local Variables:
+  * mode: C
+-- 
+1.8.1.5
+
