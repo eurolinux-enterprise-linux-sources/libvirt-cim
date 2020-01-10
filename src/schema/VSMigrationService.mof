@@ -1,0 +1,20 @@
+// Copyright IBM Corp. 2007
+
+class Xen_MigrationJob : CIM_ConcreteJob {
+};
+
+class KVM_MigrationJob : CIM_ConcreteJob {
+};
+
+[Provider("cmpi::Virt_VSMigrationService")]
+class Xen_VirtualSystemMigrationService : CIM_VirtualSystemMigrationService {
+};
+
+[Provider("cmpi::Virt_VSMigrationService")]
+class KVM_VirtualSystemMigrationService : CIM_VirtualSystemMigrationService {
+};
+
+[Provider("cmpi::Virt_VSMigrationService")]
+class LXC_VirtualSystemMigrationService : CIM_VirtualSystemMigrationService {
+};
+

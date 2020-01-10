@@ -1,0 +1,16 @@
+// Copyright IBM Corp. 2007
+
+[Provider("cmpi::Virt_ResourcePoolConfigurationCapabilities")]
+class Xen_ResourcePoolConfigurationCapabilities : CIM_ResourcePoolConfigurationCapabilities
+{
+};
+
+[Provider("cmpi::Virt_ResourcePoolConfigurationCapabilities")]
+class KVM_ResourcePoolConfigurationCapabilities : CIM_ResourcePoolConfigurationCapabilities
+{
+};
+
+[Provider("cmpi::Virt_ResourcePoolConfigurationCapabilities")]
+class LXC_ResourcePoolConfigurationCapabilities : CIM_ResourcePoolConfigurationCapabilities
+{
+};

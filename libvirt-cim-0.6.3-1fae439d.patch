@@ -1,0 +1,50 @@
+From 1fae439d0d06622d0f303c82c8b98f0a580c7774 Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Thu, 29 Aug 2013 17:18:51 +0200
+Subject: [PATCH 09/60] S390: Avoid the generation of default input and
+ graphics
+
+KVM guests for the s390 architecture do not support graphics
+and input devices. We use the os_info.fv.arch property to
+recognize such guests and skip the default device generation
+for those.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ src/Virt_VirtualSystemManagementService.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/Virt_VirtualSystemManagementService.c b/src/Virt_VirtualSystemManagementService.c
+index 3df878f..301f046 100644
+--- a/src/Virt_VirtualSystemManagementService.c
++++ b/src/Virt_VirtualSystemManagementService.c
+@@ -583,6 +583,12 @@ static bool default_graphics_device(struct domain *domain)
+         if (domain->type == DOMAIN_LXC)
+                 return true;
+ 
++        if ((domain->type == DOMAIN_KVM || domain->type == DOMAIN_QEMU) &&
++            domain->os_info.fv.arch != NULL &&
++            (XSTREQ(domain->os_info.fv.arch, "s390") ||
++             XSTREQ(domain->os_info.fv.arch, "s390x" )))
++                return true;
++
+         free(domain->dev_graphics);
+         domain->dev_graphics = calloc(1, sizeof(*domain->dev_graphics));
+         if (domain->dev_graphics == NULL) {
+@@ -605,6 +611,12 @@ static bool default_input_device(struct domain *domain)
+         if (domain->type == DOMAIN_LXC)
+                 return true;
+ 
++        if ((domain->type == DOMAIN_KVM || domain->type == DOMAIN_QEMU) &&
++            domain->os_info.fv.arch != NULL &&
++            (XSTREQ(domain->os_info.fv.arch, "s390") ||
++             XSTREQ(domain->os_info.fv.arch, "s390x" )))
++                return true;
++
+         free(domain->dev_input);
+         domain->dev_input = calloc(1, sizeof(*domain->dev_input));
+         if (domain->dev_input == NULL) {
+-- 
+2.1.0
+

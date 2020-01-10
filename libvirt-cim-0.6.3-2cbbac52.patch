@@ -1,0 +1,30 @@
+From 2cbbac52e45e0a21ed052adf79ec0e011f9e3b83 Mon Sep 17 00:00:00 2001
+From: Pavel Hrdina <phrdina@redhat.com>
+Date: Wed, 7 May 2014 12:52:15 +0200
+Subject: [PATCH 58/60] xmlgen: fix build issue
+
+Function controller_protocol_type_IDToStr() returns a const char
+and we should abide that.
+
+Signed-off-by: Pavel Hrdina <phrdina@redhat.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/xmlgen.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libxkutil/xmlgen.c b/libxkutil/xmlgen.c
+index 3174ca9..a9a672d 100644
+--- a/libxkutil/xmlgen.c
++++ b/libxkutil/xmlgen.c
+@@ -807,7 +807,7 @@ static const char *controller_xml(xmlNodePtr root, struct domain *dominfo)
+         for (i = 0; i < dominfo->dev_controller_ct; i++) {
+                 xmlNodePtr ctlr;
+                 xmlNodePtr tmp;
+-                char *type_str;
++                const char *type_str;
+ 
+                 struct virt_device *_dev = &dominfo->dev_controller[i];
+                 if (_dev->type == CIM_RES_TYPE_UNKNOWN)
+-- 
+2.1.0
+

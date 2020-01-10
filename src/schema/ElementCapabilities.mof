@@ -1,0 +1,29 @@
+// Copyright IBM Corp. 2007
+
+[Association,
+ Description (
+        "A class to associate a ManagedElement with its Capabilities."),
+ Provider("cmpi::Virt_ElementCapabilities")
+]
+class Xen_ElementCapabilities : CIM_ElementCapabilities
+{
+};
+
+[Association,
+ Description (
+        "A class to associate a ManagedElement with its Capabilities."),
+ Provider("cmpi::Virt_ElementCapabilities")
+]
+class KVM_ElementCapabilities : CIM_ElementCapabilities
+{
+};
+
+[Association,
+ Description (
+        "A class to associate a ManagedElement with its Capabilities."),
+ Provider("cmpi::Virt_ElementCapabilities")
+]
+class LXC_ElementCapabilities : CIM_ElementCapabilities
+{
+};
+

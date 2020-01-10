@@ -1,0 +1,13 @@
+// Copyright IBM Corp. 2007
+
+[Provider("cmpi::Virt_VSMigrationCapabilities")]
+class Xen_VirtualSystemMigrationCapabilities : CIM_VirtualSystemMigrationCapabilities {
+};
+
+[Provider("cmpi::Virt_VSMigrationCapabilities")]
+class KVM_VirtualSystemMigrationCapabilities : CIM_VirtualSystemMigrationCapabilities {
+};
+
+[Provider("cmpi::Virt_VSMigrationCapabilities")]
+class LXC_VirtualSystemMigrationCapabilities : CIM_VirtualSystemMigrationCapabilities {
+};

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" /><link rel="stylesheet" type="text/css" href="http://libvirt.org/CIM/main.css" /><link rel="SHORTCUT ICON" href="/32favicon.png" /><title>Schema</title><meta name="description" content="libvirt, virtualization, virtualization API, CIM" /></head><body><div id="header"><div id="headerLogo"></div><div id="headerSearch"><form action="search.php" enctype="application/x-www-form-urlencoded" method="get"><div><input id="query" name="query" type="text" size="12" value="" /><input id="submit" name="submit" type="submit" value="Search" /></div></form></div></div><div id="body"><div id="menu"><ul class="l0"><li><div><a href="index.html" class="inactive">Home</a></div></li><li><a href="http://libvirt.org/" class="inactive">libvirt</a></li><li><div><a href="news.html" class="inactive">Releases</a></div></li><li><div><a href="intro.html" class="inactive">Introduction</a></div></li><li><div><a href="downloads.html" class="inactive">Downloads</a></div></li><li><div><a href="patches.html" class="inactive">Patches</a></div></li><li><div><a href="schema.html" class="inactive">Schema</a></div></li><li><div><a href="platforms.html" class="inactive">Platform Support</a></div></li><li><div><a href="architecture.html" class="inactive">Architecture</a></div></li><li><a href="https://www.redhat.com/mailman/listinfo/libvirt-cim/" class="inactive">Mailing list</a></li></ul></div><div id="content"><h1 class="style1">Schema</h1><p>The libvirt-cim provider depends on an installed 
+  <a href="http://www.dmtf.org/standards/cim/cim_schema_v216/">DMTF
+  CIM v2.16</a> Experimental schema.  The package can be obtained
+<a href="http://www.dmtf.org/standards/cim/cim_schema_v216/cimv216Experimental-MOFs.zip">here</a>.</p><h4>To install the schema in Pegasus:</h4><p><code>
+  $ PEGASUS_REPO=/var/lib/Pegasus # adjust this as needed<br />
+  $ mkdir cim216<br />
+  $ cd cim216<br />
+  $ unzip $PATH_TO_ZIPFILE<br />
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/virt cimv216.mof<br />
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/virt qualifiers.mof<br />
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/virt qualifiers_optional.mof<br />
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/interop cimv216-interop.mof<br /></code></p><h4>To install the schema in SFCB:</h4><p><code>
+  $ SFCB_CIM=/usr/local/share/sfcb/CIM # adjust this as needed<br />
+  $ mkdir cim216<br />
+  $ cd cim216<br />
+  $ unzip $PATH_TO_ZIPFILE<br />
+  $ mv cimv216.mof CIM_Schema.mof<br />
+  $ sudo cp * $SFCB_CIM<br />
+  $ sudo sfcbrepos<br /></code></p><p><strong>Note:</strong> in both cases, the CIM v2.16 schema seems to have a
+    few classes that don't register correctly.  You may need to
+    disable installation of classes with something like the
+    following:
+</p><p><code>
+--- CIM_Schema.mof      2007-10-15 00:15:44.000000000 -0700<br />
++++ cimv216.mof 2007-10-22 10:11:19.000000000 -0700<br />
+@@ -507,3 +507,3 @@<br />
+ #pragma include ("Policy/CIM_SharedSecretAuthentication.mof")<br />
+-#pragma include ("Security/CIM_SecurityIndication.mof")<br />
++//#pragma include ("Security/CIM_SecurityIndication.mof")<br />
+ #pragma include ("Support/PRS_Activity.mof")<br />
+@@ -728,4 +728,4 @@<br />
+ #pragma include ("Policy/CIM_PolicyConditionInPolicyRule.mof")<br />
+-#pragma include ("Security/CIM_IPNetworkSecurityIndication.mof")<br />
+-#pragma include ("Security/CIM_IPPacketFilterIndication.mof")<br />
++//#pragma include ("Security/CIM_IPNetworkSecurityIndication.mof")<br />
++//#pragma include ("Security/CIM_IPPacketFilterIndication.mof")<br />
+ #pragma include ("Support/PRS_ActivityContact.mof")<br /></code></p><p><strong>cimv216-interop.mof</strong> is not part of the official DMTF 
+    CIM v2.16 schema package. Please create with the following content:
+</p><p><code>
+#pragma locale ("en_US")<br />
+#pragma include ("qualifiers.mof")<br />
+#pragma include ("qualifiers_optional.mof")<br />
+#pragma include ("Core/CIM_ManagedElement.mof")<br />
+#pragma include ("Interop/CIM_RegisteredProfile.mof")<br />
+#pragma include ("Interop/CIM_RegisteredSubProfile.mof")<br />
+#pragma include ("Core/CIM_Dependency.mof")<br />
+#pragma include ("Interop/CIM_ElementConformsToProfile.mof")<br />
+#pragma include ("Interop/CIM_ReferencedProfile.mof")<br />
+#pragma include ("Interop/CIM_SubProfileRequiresProfile.mof")<br /></code></p></div></div><div id="footer"><p id="sponsor">
+              Sponsored by:<br />
+              IBM
+            </p></div></body></html>

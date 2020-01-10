@@ -1,0 +1,16 @@
+// Copyright IBM Corp. 2007
+
+[Provider("cmpi::Virt_VSMigrationSettingData")]
+class Xen_VirtualSystemMigrationSettingData : CIM_VirtualSystemMigrationSettingData {
+    string CheckParameters[];
+};
+
+[Provider("cmpi::Virt_VSMigrationSettingData")]
+class KVM_VirtualSystemMigrationSettingData : CIM_VirtualSystemMigrationSettingData {
+    string CheckParameters[];
+};
+
+[Provider("cmpi::Virt_VSMigrationSettingData")]
+class LXC_VirtualSystemMigrationSettingData : CIM_VirtualSystemMigrationSettingData {
+    string CheckParameters[];
+};

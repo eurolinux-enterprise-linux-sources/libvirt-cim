@@ -1,0 +1,310 @@
+From 4f74864c72ffbb05c8b02ab9d12c581e22da359f Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Mon, 14 Oct 2013 17:29:41 +0200
+Subject: [PATCH 26/60] libxkutil: Support for device addresses
+
+New data type for device addresses based on the generic
+"address" element of the libvirt domain XML.
+Contains XML parsing and generation code for device addresses.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/device_parsing.c | 113 +++++++++++++++++++++++++++++++++++++++++++++
+ libxkutil/device_parsing.h |  11 +++++
+ libxkutil/xmlgen.c         |  28 +++++++++++
+ 3 files changed, 152 insertions(+)
+
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index aecca4c..97419d2 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -63,6 +63,22 @@
+ /* Device parse function */
+ typedef int (*dev_parse_func_t)(xmlNode *, struct virt_device **);
+ 
++static void cleanup_device_address(struct device_address *addr)
++{
++        int i;
++        if (addr == NULL)
++                return;
++
++        for (i = 0; i < addr->ct; i++) {
++                free(addr->key[i]);
++                free(addr->value[i]);
++        }
++
++        free(addr->key);
++        free(addr->value);
++        addr->ct = 0;
++}
++
+ static void cleanup_disk_device(struct disk_device *dev)
+ {
+         if (dev == NULL)
+@@ -77,6 +93,7 @@ static void cleanup_disk_device(struct disk_device *dev)
+         free(dev->virtual_dev);
+         free(dev->bus_type);
+         free(dev->access_mode);
++        cleanup_device_address(&dev->address);
+ }
+ 
+ static void cleanup_vsi_device(struct vsi_device *dev)
+@@ -107,6 +124,7 @@ static void cleanup_net_device(struct net_device *dev)
+         free(dev->filter_ref);
+         free(dev->poolid);
+         cleanup_vsi_device(&dev->vsi);
++        cleanup_device_address(&dev->address);
+ }
+ 
+ static void cleanup_emu_device(struct emu_device *dev)
+@@ -351,6 +369,67 @@ char *get_node_content(xmlNode *node)
+         return buf;
+ }
+ 
++int add_device_address_property(struct device_address *devaddr,
++                                const char *key,
++                                const char *value)
++{
++        char *k = NULL;
++        char *v = NULL;
++        char **list = NULL;
++
++        if (key != NULL && value != NULL) {
++                k = strdup(key);
++                v = strdup(value);
++                if (k == NULL || v == NULL)
++                        goto err;
++
++                list = realloc(devaddr->key, sizeof(char*) * (devaddr->ct+1));
++                if (list == NULL)
++                        goto err;
++                devaddr->key = list;
++
++                list = realloc(devaddr->value, sizeof(char*) * (devaddr->ct+1));
++                if (list == NULL)
++                        goto err;
++                devaddr->value = list;
++
++                devaddr->key[devaddr->ct] = k;
++                devaddr->value[devaddr->ct] = v;
++                devaddr->ct += 1;
++                return 1;
++        }
++
++ err:
++        free(k);
++        free(v);
++        free(list);
++        return 0;
++}
++
++
++static int parse_device_address(xmlNode *anode, struct device_address *devaddr)
++{
++        xmlAttr *attr = NULL;
++        char *name = NULL;
++        char *value = NULL;
++
++        for (attr = anode->properties; attr != NULL; attr = attr->next) {
++                name = (char*) attr->name;
++                value = get_attr_value(anode, name);
++                if (!add_device_address_property(devaddr, name, value))
++                        goto err;
++                free(value);
++        }
++
++        return 1;
++
++ err:
++        cleanup_device_address(devaddr);
++        free(value);
++
++        return 0;
++}
++
+ static int parse_fs_device(xmlNode *dnode, struct virt_device **vdevs)
+ {
+         struct virt_device *vdev = NULL;
+@@ -386,6 +465,8 @@ static int parse_fs_device(xmlNode *dnode, struct virt_device **vdevs)
+                         }
+                 } else if (XSTREQ(child->name, "driver")) {
+                        ddev->driver_type = get_attr_value(child, "type");
++                } else if (XSTREQ(child->name, "address")) {
++                        parse_device_address(child, &ddev->address);
+                 }
+         }
+ 
+@@ -459,6 +540,8 @@ static int parse_block_device(xmlNode *dnode, struct virt_device **vdevs)
+                         ddev->readonly = true;
+                 } else if (XSTREQ(child->name, "shareable")) {
+                         ddev->shareable = true;
++                } else if (XSTREQ(child->name, "address")) {
++                        parse_device_address(child, &ddev->address);
+                 }
+         }
+ 
+@@ -598,6 +681,8 @@ static int parse_net_device(xmlNode *inode, struct virt_device **vdevs)
+                         ndev->filter_ref = get_attr_value(child, "filter");
+                 } else if (XSTREQ(child->name, "virtualport")) {
+                         parse_vsi_device(child, ndev);
++                } else if (XSTREQ(child->name, "address")) {
++                        parse_device_address(child, &ndev->address);
+ #if LIBVIR_VERSION_NUMBER >= 9000
+                 } else if (XSTREQ(child->name, "bandwidth")) {
+                         /* Network QoS bandwidth support */
+@@ -1167,6 +1252,32 @@ static int parse_devices(const char *xml, struct virt_device **_list, int type)
+         return count;
+ }
+ 
++static void duplicate_device_address(struct device_address *to, const struct device_address *from)
++{
++        int i;
++
++        if (from == NULL || to == NULL || from->ct == 0)
++                return;
++
++        to->ct = from->ct;
++        to->key = calloc(from->ct, sizeof(char*));
++        to->value = calloc(from->ct, sizeof(char*));
++        if (to->key == NULL || to->value == NULL)
++                goto err;
++
++        for (i = 0; i < from->ct; i++) {
++                to->key[i] = strdup(from->key[i]);
++                to->value[i] = strdup(from->value[i]);
++                if (to->key[i] == NULL || to->value[i] == NULL)
++                        goto err;
++        }
++
++        return;
++
++ err:
++        cleanup_device_address(to);
++}
++
+ struct virt_device *virt_device_dup(struct virt_device *_dev)
+ {
+         struct virt_device *dev;
+@@ -1196,6 +1307,7 @@ struct virt_device *virt_device_dup(struct virt_device *_dev)
+                 DUP_FIELD(dev, _dev, dev.net.vsi.profile_id);
+                 dev->dev.net.reservation = _dev->dev.net.reservation;
+                 dev->dev.net.limit = _dev->dev.net.limit;
++                duplicate_device_address(&dev->dev.net.address, &_dev->dev.net.address);
+         } else if (dev->type == CIM_RES_TYPE_DISK) {
+                 DUP_FIELD(dev, _dev, dev.disk.type);
+                 DUP_FIELD(dev, _dev, dev.disk.device);
+@@ -1209,6 +1321,7 @@ struct virt_device *virt_device_dup(struct virt_device *_dev)
+                 dev->dev.disk.disk_type = _dev->dev.disk.disk_type;
+                 dev->dev.disk.readonly = _dev->dev.disk.readonly;
+                 dev->dev.disk.shareable = _dev->dev.disk.shareable;
++                duplicate_device_address(&dev->dev.disk.address, &_dev->dev.disk.address);
+         } else if (dev->type == CIM_RES_TYPE_MEM) {
+                 dev->dev.mem.size = _dev->dev.mem.size;
+                 dev->dev.mem.maxsize = _dev->dev.mem.maxsize;
+diff --git a/libxkutil/device_parsing.h b/libxkutil/device_parsing.h
+index 2803d6a..531703d 100644
+--- a/libxkutil/device_parsing.h
++++ b/libxkutil/device_parsing.h
+@@ -33,6 +33,12 @@
+ 
+ #include "../src/svpc_types.h"
+ 
++struct device_address {
++        uint32_t ct;
++        char **key;
++        char **value;
++};
++
+ struct vsi_device {
+         char *vsi_type;
+         char *manager_id;
+@@ -56,6 +62,7 @@ struct disk_device {
+         char *bus_type;
+         char *cache;
+         char *access_mode; /* access modes for DISK_FS (filesystem) type */
++        struct device_address address;
+ };
+ 
+ struct net_device {
+@@ -70,6 +77,7 @@ struct net_device {
+         uint64_t reservation;
+         uint64_t limit;
+         struct vsi_device vsi;
++        struct device_address address;
+ };
+ 
+ struct mem_device {
+@@ -257,6 +265,9 @@ int get_devices(virDomainPtr dom, struct virt_device **list, int type,
+ void cleanup_virt_device(struct virt_device *dev);
+ void cleanup_virt_devices(struct virt_device **devs, int count);
+ 
++int add_device_address_property(struct device_address *devaddr,
++                                const char *key, const char *value);
++
+ char *get_node_content(xmlNode *node);
+ char *get_attr_value(xmlNode *node, char *attrname);
+ 
+diff --git a/libxkutil/xmlgen.c b/libxkutil/xmlgen.c
+index 7e8801d..40e2905 100644
+--- a/libxkutil/xmlgen.c
++++ b/libxkutil/xmlgen.c
+@@ -178,6 +178,26 @@ static const char *console_xml(xmlNodePtr root, struct domain *dominfo)
+                                    BAD_CAST cdev->target_type);
+                 }
+         }
++
++        return NULL;
++}
++
++static char *device_address_xml(xmlNodePtr root, struct device_address *addr)
++{
++        int i;
++        xmlNodePtr address;
++
++        if (addr == NULL || addr->ct == 0)
++                return NULL;
++
++        address = xmlNewChild(root, NULL, BAD_CAST "address", NULL);
++        if (address == NULL)
++                return XML_ERROR;
++
++        for (i = 0; i < addr->ct; i++) {
++                xmlNewProp(address, BAD_CAST addr->key[i] , BAD_CAST addr->value[i]);
++        }
++
+         return NULL;
+ }
+ 
+@@ -225,6 +245,9 @@ static char *disk_block_xml(xmlNodePtr root, struct disk_device *dev)
+         if (dev->shareable)
+                 xmlNewChild(disk, NULL, BAD_CAST "shareable", NULL);
+ 
++        if (dev->address.ct > 0)
++                return device_address_xml(disk, &dev->address);
++
+         return NULL;
+ }
+ 
+@@ -279,6 +302,8 @@ static const char *disk_file_xml(xmlNodePtr root, struct disk_device *dev)
+         if (dev->shareable)
+                 xmlNewChild(disk, NULL, BAD_CAST "shareable", NULL);
+ 
++        if (dev->address.ct > 0)
++                return device_address_xml(disk, &dev->address);
+ 
+         return NULL;
+ }
+@@ -520,6 +545,9 @@ static const char *net_xml(xmlNodePtr root, struct domain *dominfo)
+                 }
+ #endif
+ 
++                if (dev->dev.net.address.ct > 0)
++                        msg = device_address_xml(nic, &dev->dev.net.address);
++
+                 if (STREQ(dev->dev.net.type, "network")) {
+                         msg = set_net_source(nic, net, "network");
+                 } else if (STREQ(dev->dev.net.type, "bridge")) {
+-- 
+2.1.0
+

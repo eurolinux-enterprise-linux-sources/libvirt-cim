@@ -1,0 +1,116 @@
+From 5787acc1531d32b13223d8804c88142ed188e753 Mon Sep 17 00:00:00 2001
+From: Xu Wang <gesaint@linux.vnet.ibm.com>
+Date: Tue, 27 May 2014 16:14:10 +0800
+Subject: [PATCH 59/60] Add disk device='lun' support
+
+Besides 'disk', 'cdrom', 'floppy' and 'filesystem', there is one
+more value 'lun' should be supported by value of device field in
+the disk device. So this patch adds it into libvirt-cim. Now device
+like <disk type='block' device='lun'> could be operated by class.
+
+Signed-off-by: Xu Wang <gesaint@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ schema/ResourceAllocationSettingData.mof  | 8 ++++----
+ src/Virt_RASD.c                           | 3 +++
+ src/Virt_RASD.h                           | 1 +
+ src/Virt_SettingsDefineCapabilities.c     | 5 ++++-
+ src/Virt_VirtualSystemManagementService.c | 5 ++++-
+ 5 files changed, 16 insertions(+), 6 deletions(-)
+
+diff --git a/schema/ResourceAllocationSettingData.mof b/schema/ResourceAllocationSettingData.mof
+index 9c387f0..f78d423 100644
+--- a/schema/ResourceAllocationSettingData.mof
++++ b/schema/ResourceAllocationSettingData.mof
+@@ -10,8 +10,8 @@ class Xen_DiskResourceAllocationSettingData : Xen_ResourceAllocationSettingData
+       string VirtualDevice;
+ 
+       [Description ("Device emulation type"),
+-        ValueMap {"0", "1", "2"},
+-        Values {"Disk", "CDROM", "floppy"}]
++        ValueMap {"0", "1", "2", "4"},
++        Values {"Disk", "CDROM", "floppy", "lun"}]
+       uint16 EmulatedType;
+ 
+       [Description ("Bus type of the device")]
+@@ -43,8 +43,8 @@ class KVM_DiskResourceAllocationSettingData : KVM_ResourceAllocationSettingData
+       string VirtualDevice;
+ 
+       [Description ("Device emulation type"),
+-        ValueMap {"0", "1", "2", "3"},
+-        Values {"Disk", "CDROM", "floppy", "filesystem"}]
++        ValueMap {"0", "1", "2", "3", "4"},
++        Values {"Disk", "CDROM", "floppy", "filesystem", "lun"}]
+       uint16 EmulatedType;
+ 
+       [Description ("Bus type of the device")]
+diff --git a/src/Virt_RASD.c b/src/Virt_RASD.c
+index 3c62c2d..761d053 100644
+--- a/src/Virt_RASD.c
++++ b/src/Virt_RASD.c
+@@ -444,6 +444,9 @@ static CMPIStatus set_disk_rasd_params(const CMPIBroker *broker,
+         else if ((dev->dev.disk.device != NULL) &&
+                 STREQ(dev->dev.disk.device, "floppy"))
+                 type = VIRT_DISK_TYPE_FLOPPY;
++        else if ((dev->dev.disk.device != NULL) &&
++                STREQ(dev->dev.disk.device, "lun"))
++                type = VIRT_DISK_TYPE_LUN;
+         else
+                 type = VIRT_DISK_TYPE_DISK;
+ 
+diff --git a/src/Virt_RASD.h b/src/Virt_RASD.h
+index 400143f..49d7195 100644
+--- a/src/Virt_RASD.h
++++ b/src/Virt_RASD.h
+@@ -27,6 +27,7 @@
+ #define VIRT_DISK_TYPE_CDROM 1
+ #define VIRT_DISK_TYPE_FLOPPY 2
+ #define VIRT_DISK_TYPE_FS 3
++#define VIRT_DISK_TYPE_LUN 4
+ 
+ char *rasd_to_xml(CMPIInstance *rasd);
+ 
+diff --git a/src/Virt_SettingsDefineCapabilities.c b/src/Virt_SettingsDefineCapabilities.c
+index 756e46b..85cb27a 100644
+--- a/src/Virt_SettingsDefineCapabilities.c
++++ b/src/Virt_SettingsDefineCapabilities.c
+@@ -1071,9 +1071,12 @@ static CMPIStatus set_disk_props(int type,
+                                       (CMPIValue *)"FV disk", CMPI_chars);
+                 }
+ 
+-                if (emu_type == VIRT_DISK_TYPE_DISK) {
++                if (emu_type == VIRT_DISK_TYPE_DISK ||
++                    emu_type == VIRT_DISK_TYPE_LUN) {
+                         CMSetProperty(inst, "VirtualQuantity",
+                                       (CMPIValue *)&disk_size, CMPI_uint64);
++                    if (emu_type == VIRT_DISK_TYPE_LUN)
++                        dev = "sda";
+                 } else if (emu_type == VIRT_DISK_TYPE_CDROM) {
+                         dev = "hdc";
+                 } else if (emu_type == VIRT_DISK_TYPE_FLOPPY) {
+diff --git a/src/Virt_VirtualSystemManagementService.c b/src/Virt_VirtualSystemManagementService.c
+index f673c38..c640360 100644
+--- a/src/Virt_VirtualSystemManagementService.c
++++ b/src/Virt_VirtualSystemManagementService.c
+@@ -1114,7 +1114,8 @@ static const char *disk_rasd_to_vdev(CMPIInstance *inst,
+                 type = VIRT_DISK_TYPE_DISK;
+ 
+         if ((type == VIRT_DISK_TYPE_DISK) ||
+-            (type == VIRT_DISK_TYPE_FS)){
++            (type == VIRT_DISK_TYPE_FS) ||
++            (type == VIRT_DISK_TYPE_LUN)){
+             if (dev->dev.disk.disk_type == DISK_UNKNOWN) {
+                 /* on success or fail caller should try free it */
+                 rc = asprintf(p_error, "Device %s, Address %s, "
+@@ -1149,6 +1150,8 @@ static const char *disk_rasd_to_vdev(CMPIInstance *inst,
+                 dev->dev.disk.device = strdup("floppy");
+         else if (type == VIRT_DISK_TYPE_FS) 
+                 dev->dev.disk.device = strdup("filesystem");
++        else if (type == VIRT_DISK_TYPE_LUN)
++                dev->dev.disk.device = strdup("lun");
+         else
+                 return "Invalid value for EmulatedType";
+ 
+-- 
+2.1.0
+

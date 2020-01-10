@@ -1,0 +1,91 @@
+From 242ddaa613c4d41cbdd063b73d20292049944b47 Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Mon, 7 Oct 2013 16:02:37 +0200
+Subject: [PATCH 24/60] KVMRedirectionSAP: Only return redirection SAPs for VNC
+ graphics
+
+Since pty consoles still show up as GraphicsRASDs the check for
+VNC redirection proved to be too rigid. Instead of failing the
+associator call, PTY consoles will just be ignored now.
+This is an old bug, but will be exposed when cimtest is extended
+to handle consoles.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Reviewed-by: Daniel Hansel <daniel.hansel@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ src/Virt_KVMRedirectionSAP.c | 26 +++++++++++++++-----------
+ 1 file changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/src/Virt_KVMRedirectionSAP.c b/src/Virt_KVMRedirectionSAP.c
+index 708b0d1..1533e52 100644
+--- a/src/Virt_KVMRedirectionSAP.c
++++ b/src/Virt_KVMRedirectionSAP.c
+@@ -264,28 +264,31 @@ static CMPIStatus get_vnc_sessions(const CMPIBroker *broker,
+         return s;
+ }
+ 
+-static bool check_graphics(virDomainPtr dom,
+-                           struct domain **dominfo)
++static int check_graphics(virDomainPtr dom,
++                          struct domain **dominfo)
+ {
+         int ret = 0;
++        int i;
+ 
+         ret = get_dominfo(dom, dominfo);
+         if (!ret) {
+                 CU_DEBUG("Unable to get domain info");
+-                return false;
++                return -1;
+         }
+ 
+         if ((*dominfo)->dev_graphics == NULL) {
+                 CU_DEBUG("No graphics device associated with guest");
+-                return false;
++                return -1;
+         } 
+ 
+-        if (!STREQC((*dominfo)->dev_graphics->dev.graphics.type, "vnc")) {
+-                CU_DEBUG("Only vnc devices have console redirection sessions");
+-                return false;
++        for (i = 0; i < (*dominfo)->dev_graphics_ct; i++) {
++                if (STREQC((*dominfo)->dev_graphics[i].dev.graphics.type, "vnc")) {
++                        return i;
++                }
+         }
+ 
+-        return true;
++        CU_DEBUG("Only vnc devices have console redirection sessions");
++        return -1;
+ }
+ 
+ static CMPIStatus return_console_sap(const CMPIObjectPath *ref,
+@@ -362,12 +365,13 @@ CMPIStatus enum_console_sap(const CMPIBroker *broker,
+         }
+ 
+         for (i = 0; i < count; i++) {
+-                if (!check_graphics(domain_list[i], &dominfo)) {
++                int pos = check_graphics(domain_list[i], &dominfo);
++                if (pos < 0) {
+                         cleanup_dominfo(&dominfo);
+                         continue;
+                 }
+ 
+-                ret = sscanf(dominfo->dev_graphics->dev.graphics.dev.vnc.port,
++                ret = sscanf(dominfo->dev_graphics[pos].dev.graphics.dev.vnc.port,
+                              "%d",
+                              &lport);
+                 if (ret != 1) {
+@@ -449,7 +453,7 @@ CMPIStatus get_console_sap_by_name(const CMPIBroker *broker,
+                 goto out;
+         }
+ 
+-        if (!check_graphics(dom, &dominfo)) {
++        if (check_graphics(dom, &dominfo) < 0) {
+                 virt_set_status(broker, &s,
+                                 CMPI_RC_ERR_FAILED,
+                                 conn,
+-- 
+2.1.0
+

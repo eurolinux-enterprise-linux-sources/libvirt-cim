@@ -1,0 +1,198 @@
+From a8cfd7dc6a4f173c764f02688ff0c8aec00ecec2 Mon Sep 17 00:00:00 2001
+From: John Ferlan <jferlan@redhat.com>
+Date: Mon, 13 Jan 2014 14:11:21 -0500
+Subject: [PATCH 48/48] Use of root/interop instead of root/PG_InterOp
+
+As of tog-pegasus 2.12.1-5 we can no longer use "root/PG_InterOp" namespace
+for the CIM provider instead the use of "root/interop" is the preferred
+mechanism.
+
+This patch will adjust where libvirt-cim installs its classes to use the
+"root/interop" namespace.
+
+For more context, see:
+
+    http://www.redhat.com/archives/libvirt-cim/2013-November/msg00083.html
+
+and
+
+    http://www.redhat.com/archives/libvirt-cim/2013-November/msg00008.html
+
+This patch does not include the schema changes to FilterList although I
+have a suspicion that a bug fix between 2.12.1-8 and 2.12.1-11 has resolved
+the issue seen.  Cannot find a reference though.
+
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ Makefile.am          | 29 ++++++++++++++++++++++++-----
+ libvirt-cim.spec.in  | 27 ++++++++++++++++++++++-----
+ provider-register.sh | 18 +++++++++++++++++-
+ 3 files changed, 63 insertions(+), 11 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 9e8e96b..69b65cf 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -78,6 +78,9 @@ INTEROP_MOFS = \
+ 	$(top_srcdir)/schema/ReferencedProfile.mof \
+ 	$(top_srcdir)/schema/AllocationCapabilities.mof
+ 
++# The PGINTEROP_MOFS are used by tog-pegasus up through version 2.12.1
++# If support for versions prior to 2.12.1 is removed, then these defs
++# can go away
+ PGINTEROP_MOFS = \
+ 	$(top_srcdir)/schema/RegisteredProfile.mof \
+ 	$(top_srcdir)/schema/ElementConformsToProfile.mof \
+@@ -157,6 +160,9 @@ INTEROP_REGS = \
+ 	$(top_srcdir)/schema/ElementConformsToProfile.registration \
+ 	$(top_srcdir)/schema/ReferencedProfile.registration
+ 
++# The PGINTEROP_REGS are used by tog-pegasus up through version 2.12.1
++# If support for versions prior to 2.12.1 is removed, then these defs
++# can go away
+ PGINTEROP_REGS = \
+ 	$(top_srcdir)/schema/RegisteredProfile.registration \
+ 	$(top_srcdir)/schema/ElementConformsToProfile.registration \
+@@ -181,7 +187,8 @@ EXTRA_DIST = schema $(MOFS) $(REGS) $(INTEROP_MOFS) $(INTEROP_REGS) \
+              .changeset .revision 			\
+ 	     examples/diskpool.conf
+ 
+-# If Pegasus isn't the CIMOM target, then remove the PG_InterOp namespace from the appropriate files
++# If Pegasus isn't the CIMOM target, then remove the PG_InterOp namespace
++# from the appropriate files
+ install-data-local:
+ 	$(mkinstalldirs) "$(DESTDIR)$(pkgdatadir)"
+ 	$(install_sh_DATA) -t "$(DESTDIR)$(pkgdatadir)" $(MOFS)
+@@ -189,11 +196,12 @@ install-data-local:
+ 	$(install_sh_DATA) -t "$(DESTDIR)$(pkgdatadir)" $(INTEROP_MOFS)
+ 	$(install_sh_DATA) -t "$(DESTDIR)$(pkgdatadir)" $(INTEROP_REGS)
+ 	if [[ @CIMSERVER@ != pegasus ]]; then \
+-	sed -i '/^# --/,/^# --!/d' $(subst $(top_srcdir)/schema,$(DESTDIR)$(pkgdatadir), $(PGINTEROP_REGS)); \
++	    sed -i '/^# --/,/^# --!/d' $(subst $(top_srcdir)/schema,$(DESTDIR)$(pkgdatadir), $(PGINTEROP_REGS)); \
++	    sed -i '/^# --/,/^# --!/d' $(subst $(top_srcdir)/schema,$(DESTDIR)$(pkgdatadir), $(PGINTEROP_MOFS)); \
+ 	fi
+ 
+ uninstall-local:
+-	@list='$(MOFS) $(REGS) $(INTEROP_MOFS) $(INTEROP_REGS)'; \
++	@list='$(MOFS) $(REGS) $(INTEROP_MOFS) $(INTEROP_REGS) $(PGINTEROP_REGS) $(PGINTEROP_MOFS)'; \
+ 	for p in $$list; do \
+ 	f=`echo "$$p" | sed 's|^.*/||;'`; \
+ 	echo " rm -f '$(DESTDIR)$(pkgdatadir)/$$f'"; \
+@@ -209,8 +217,19 @@ postinstall:
+ 	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n @CIM_VIRT_NS@ -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(MOFS))
+ 	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n root/interop -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_MOFS))
+ 	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n root/cimv2 -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_MOFS))
++        #
++        # We need to check the version - if we're not yet at 2.12.1, then
++        # we'll register at root/PG_InterOp; otherwise, using just the above
++        # registration should be sufficient. The actual cutoff root/PG_InterOp
++        # not being valid was 2.12.1-5; however, --version doesn't give us that
++        # level of detail. The Pegasus docs imply that usage of root/interop was
++        # valid as of 2.12.0.
++        #
+ 	if [[ @CIMSERVER@ = pegasus ]]; then \
+-	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
++	    CIMVER=`@CIMSERVER@ --version | awk -F. '{printf("%02d%02d%02d\n", $1,$2,$3); }'` \
++	    if [[ $CIMVER -lt 021201 ]]; then \
++	        $(SHELL) provider-register.sh -v -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
++	    fi \
+ 	fi
+ 	virsh -v | grep -q '^0.3' && cp examples/diskpool.conf $(DISK_POOL_CONFIG) || true
+ 	mkdir -p $(INFO_STORE)
+@@ -220,7 +239,7 @@ preuninstall:
+ 	$(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n root/interop -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_MOFS))
+ 	$(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n root/cimv2 -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_MOFS))
+ 	if [[ @CIMSERVER@ = pegasus ]]; then \
+-	$(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
++	    $(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
+ 	fi
+ 
+ rpm: clean
+diff --git a/libvirt-cim.spec.in b/libvirt-cim.spec.in
+index 24ef280..01ee329 100644
+--- a/libvirt-cim.spec.in
++++ b/libvirt-cim.spec.in
+@@ -200,6 +200,10 @@ rm -fr $RPM_BUILD_ROOT
+     %{_datadir}/%{name}/ReferencedProfile.mof \\\
+     %{_datadir}/%{name}/AllocationCapabilities.mof
+ 
++# NOTE: As of Pegasus 2.12.1-5, using root/PG_InterOp will no longer be
++#       valid. All mofs can just compile into root/interop.  However, we
++#       need to keep these here for 'historical purposes'.
++#
+ %define PGINTEROP_REG %{_datadir}/%{name}/RegisteredProfile.registration \\\
+     %{_datadir}/%{name}/ElementConformsToProfile.registration \\\
+     %{_datadir}/%{name}/ReferencedProfile.registration
+@@ -268,12 +272,12 @@ fi
+ %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
+     if [ "`systemctl is-active tog-pegasus.service 2> /dev/null`" = "active" ]
+     then
+-        systemctl restart tog-pegasus.service
++        systemctl restart tog-pegasus.service > /dev/null 2>&1
+     fi
+ 
+     if [ "`systemctl is-active sblim-sfcb.service 2> /dev/null`" = "active" ]
+     then
+-        systemctl restart sblim-sfcb.service
++        systemctl restart sblim-sfcb.service > /dev/null 2>&1
+     fi
+ %else
+     /etc/init.d/tog-pegasus condrestart
+@@ -287,9 +291,22 @@ then
+     %{_datadir}/%{name}/provider-register.sh -t pegasus \
+         -n root/interop \
+         -r %{INTEROP_REG} -m %{INTEROP_MOF} -v >/dev/null 2>&1 || true
+-    %{_datadir}/%{name}/provider-register.sh -t pegasus \
+-        -n root/PG_InterOp \
+-        -r %{PGINTEROP_REG} -m %{PGINTEROP_MOF} -v >/dev/null 2>&1 || true
++    #
++    # We need to check the version - if we're not yet at 2.12.1, then
++    # we'll register at root/PG_InterOp; otherwise, using just the above
++    # registration should be sufficient. The actual cutoff root/PG_InterOp
++    # not being valid was 2.12.1-5; however, --version doesn't give us that
++    # level of detail. The Pegasus docs imply that usage of root/interop was
++    # valid as of 2.12.0.
++    #
++    CIMVER=`/usr/sbin/cimserver --version | \
++           awk -F. '{printf("%02d%02d%02d\n", $1,$2,$3); }'`
++    if [ $CIMVER -lt 021201 ]
++    then
++        %{_datadir}/%{name}/provider-register.sh -t pegasus \
++            -n root/PG_InterOp \
++            -r %{PGINTEROP_REG} -m %{PGINTEROP_MOF} -v >/dev/null 2>&1 || true
++    fi
+     %{_datadir}/%{name}/provider-register.sh -t pegasus \
+         -n root/cimv2\
+         -r %{CIMV2_REG} -m %{CIMV2_MOF} -v >/dev/null 2>&1 || true
+diff --git a/provider-register.sh b/provider-register.sh
+index abe8e95..f66fe54 100755
+--- a/provider-register.sh
++++ b/provider-register.sh
+@@ -274,7 +274,23 @@ pegasus_install()
+ 	chatter Registering providers with $state cimserver '('$version')'
+         chatter Installing mofs into namespace $namespace from path $mofpath
+ 	$CIMMOF -uc -I $mofpath -n $namespace $mymofs &&
+-	$CIMMOF -uc -n root/PG_Interop $_REGFILENAME
++        #
++        # If compare_version returns false here (e.g. $version is less than
++        # "2.12.1", then we will compile into root/PG_InterOp; otherwise,
++        # compile into root/interop.  As of 2.12.1-5 using the PG_InterOp
++        # will fail.  Since we cannot get that level of detail out of the
++        # --version output, "assume" that 2.12.1 -> 2.12.1-4 will be able
++        # to use the new namespace. The Pegasus docs imply as of 2.12.0 using
++        # root/interop was preferred.
++        #
++        if compare_version "$version" "2.12.1"
++        then
++            chatter Installing $_REGFILENAME into root/PG_InterOp
++	    $CIMMOF -uc -n root/PG_Interop $_REGFILENAME
++        else
++            chatter Installing $_REGFILENAME into root/interop
++	    $CIMMOF -uc -n root/interop $_REGFILENAME
++        fi
+     else
+ 	echo "Failed to build pegasus registration MOF." >&2
+ 	return 1
+-- 
+1.8.5.3
+

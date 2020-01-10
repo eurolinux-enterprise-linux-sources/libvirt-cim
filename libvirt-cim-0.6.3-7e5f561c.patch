@@ -1,0 +1,52 @@
+From 7e5f561c35a58a35225fccd6ecd418f2715e2a1a Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Fri, 11 Oct 2013 13:47:32 +0200
+Subject: [PATCH 34/60] VSDC: Fix endianess issues
+
+SetProperty was called with int instead of uint16_t in a few places.
+This leads to failures on big-endian systems like s390. Found
+by running cimtest.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ src/Virt_SettingsDefineCapabilities.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/src/Virt_SettingsDefineCapabilities.c b/src/Virt_SettingsDefineCapabilities.c
+index 78c128c..fe16e3f 100644
+--- a/src/Virt_SettingsDefineCapabilities.c
++++ b/src/Virt_SettingsDefineCapabilities.c
+@@ -1349,7 +1349,7 @@ static CMPIStatus _new_volume_template(const CMPIObjectPath *ref,
+         int ret = 0;
+         struct virt_pool *pool = NULL;
+         CMPIInstance *inst = NULL;
+-        int type = 0;
++        uint16_t type = 0;
+         const char *name;
+         const char *path;
+         uint16_t alloc = 0;
+@@ -1712,13 +1712,13 @@ static CMPIStatus disk_pool_template(const CMPIObjectPath *ref,
+         CMPIArray *array;
+         CMPIStatus s = {CMPI_RC_OK, NULL};
+         const char *path = "/dev/null";
+-        int type[7] = {DISK_POOL_DIR,
+-                       DISK_POOL_FS,
+-                       DISK_POOL_NETFS,
+-                       DISK_POOL_DISK,
+-                       DISK_POOL_ISCSI,
+-                       DISK_POOL_LOGICAL,
+-                       DISK_POOL_SCSI};
++        uint16_t type[7] = {DISK_POOL_DIR,
++                            DISK_POOL_FS,
++                            DISK_POOL_NETFS,
++                            DISK_POOL_DISK,
++                            DISK_POOL_ISCSI,
++                            DISK_POOL_LOGICAL,
++                            DISK_POOL_SCSI};
+         int pool_types = 7;
+         int i;
+         uint16_t autostart;
+-- 
+2.1.0
+

@@ -1,0 +1,30 @@
+// Copyright IBM Corp. 2007
+
+class Virt_VirtualSystemSettingData : CIM_VirtualSystemSettingData
+{
+
+  [Description ("Clock offset control"),
+   ValueMap { "0", "1" },
+   Values { "UTC", "Local" }]
+  uint16 ClockOffset;
+
+  [Override, ValueMap { "2", "3", ".." }, 
+             Values { "Turn Off", "Save state", "DMTF Reserved" }]
+  uint16 AutomaticShutdownAction;
+
+  [Description("UUID assigned to this DomU.")]
+  string UUID;
+
+  [Description ("Flag to determine whether this guest has acpi enabled")]
+  boolean EnableACPI;
+
+  [Description ("Flag to determine whether this guest has apic enabled")]
+  boolean EnableAPIC;
+
+  [Description ("Flag to determine whether this guest has pae enabled")]
+  boolean EnablePAE;
+
+  [Description ("Flag to determine whether this guest has to be autostarted on reboot")]
+  uint16 AutoStart;
+
+};

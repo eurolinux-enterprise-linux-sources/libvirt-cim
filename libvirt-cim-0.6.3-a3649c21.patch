@@ -1,0 +1,70 @@
+From a3649c210487b86a313bf84043cd1a923397c5d1 Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Wed, 11 Sep 2013 16:45:39 +0200
+Subject: [PATCH 19/60] Device: CIM_LogicalDevice for consoles
+
+Extended the Virt_Device provider to return DisplayController
+devices for the consoles found. This mainly for the purpose of
+consistency with the other RASD types.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Reviewed-by: Boris Fiuczynski <fiuczy@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ src/Virt_Device.c | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+diff --git a/src/Virt_Device.c b/src/Virt_Device.c
+index c3b515c..aa47276 100644
+--- a/src/Virt_Device.c
++++ b/src/Virt_Device.c
+@@ -251,6 +251,34 @@ static CMPIInstance *graphics_instance(const CMPIBroker *broker,
+         return inst;
+ }
+ 
++static CMPIInstance *console_instance(const CMPIBroker *broker,
++                                      struct console_device *dev,
++                                      const virDomainPtr dom,
++                                      const char *ns)
++{
++        CMPIInstance *inst;
++        virConnectPtr conn;
++        const char *ctype;
++
++        conn = virDomainGetConnect(dom);
++        inst = get_typed_instance(broker,
++                                  pfx_from_conn(conn),
++                                  "DisplayController",
++                                  ns,
++                                  true);
++
++        if (inst == NULL) {
++                CU_DEBUG("Failed to get instance for DisplayController");
++                return NULL;
++        }
++
++        ctype = chardev_source_type_IDToStr(dev->source_type);
++        CMSetProperty(inst, "VideoProcessor",
++                      (CMPIValue *)ctype, CMPI_chars);
++
++        return inst;
++}
++
+ int get_input_dev_caption(const char *type,
+                           const char *bus,
+                           char **cap)
+@@ -483,6 +511,11 @@ static bool device_instances(const CMPIBroker *broker,
+                                                      &dev->dev.graphics,
+                                                      dom,
+                                                      ns);
++                else if (dev->type == CIM_RES_TYPE_CONSOLE)
++                        instance = console_instance(broker,
++                                                    &dev->dev.console,
++                                                    dom,
++                                                    ns);
+                  else if (dev->type == CIM_RES_TYPE_INPUT)
+                         instance = input_instance(broker,
+                                                   &dev->dev.input,
+-- 
+2.1.0
+

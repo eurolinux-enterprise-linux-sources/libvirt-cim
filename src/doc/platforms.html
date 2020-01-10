@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" /><link rel="stylesheet" type="text/css" href="http://libvirt.org/CIM/main.css" /><link rel="SHORTCUT ICON" href="/32favicon.png" /><title>Platform Support</title><meta name="description" content="libvirt, virtualization, virtualization API, CIM" /></head><body><div id="header"><div id="headerLogo"></div><div id="headerSearch"><form action="search.php" enctype="application/x-www-form-urlencoded" method="get"><div><input id="query" name="query" type="text" size="12" value="" /><input id="submit" name="submit" type="submit" value="Search" /></div></form></div></div><div id="body"><div id="menu"><ul class="l0"><li><div><a href="index.html" class="inactive">Home</a></div></li><li><a href="http://libvirt.org/" class="inactive">libvirt</a></li><li><div><a href="news.html" class="inactive">Releases</a></div></li><li><div><a href="intro.html" class="inactive">Introduction</a></div></li><li><div><a href="downloads.html" class="inactive">Downloads</a></div></li><li><div><a href="patches.html" class="inactive">Patches</a></div></li><li><div><a href="schema.html" class="inactive">Schema</a></div></li><li><div><a href="platforms.html" class="inactive">Platform Support</a></div></li><li><div><a href="architecture.html" class="inactive">Architecture</a></div></li><li><a href="https://www.redhat.com/mailman/listinfo/libvirt-cim/" class="inactive">Mailing list</a></li></ul></div><div id="content"><h1 class="style1">Platform Support</h1><p>Currently, libvirt-cim is targetting Xen as its primary support
+  platform because is has the largest installed user base.  The
+  long-term plan is to support many others (hopefully any that libvirt
+  supports).  This includes KVM and containers.
+</p><p>The code base currently has many Xen-specific "shortcuts" that need
+  to be resolved and generalized in order to support other platforms.
+  A short list of these may include:</p><ul><li>The XML generation and parsing code and the related device
+    modeling code.</li>
+  <li>The libvirt connection logic.  Right now, (in most places) we
+    detect the current hypervisor in use and connect to libvirt
+    appropriately.  This may or may not be the correct behavior in a
+    situation where you could need to support containers and QEMU
+    virtual machines.</li>
+  <li>Some lingering hard-coded "Xen_Foo" class names.</li>
+</ul><p>Further, supporting new platforms have some registration and
+  modeling implications:</p><ul><li>Additions to the MOF and registration files for "branded"
+    classes (Xen_Foo, KVM_Foo, etc)</li>
+  <li>Modifications to some of the association providers that register
+    separate CMPI provider structures for each class type they handle
+    (to avoid duplicate results in the general case)</li>
+</ul></div></div><div id="footer"><p id="sponsor">
+              Sponsored by:<br />
+              IBM
+            </p></div></body></html>

@@ -1,0 +1,64 @@
+// Copyright IBM Corp. 2007
+
+[Description (
+	"A class derived from Virt_VirtualSystemSettingData to represent "
+	"the config of Xen virtual machines/domains running on the system."),
+ Provider("cmpi::Virt_VSSD")
+]
+class Xen_VirtualSystemSettingData : Virt_VirtualSystemSettingData
+{
+
+  [Description ("Flag to determine whether this guest is fully-virtualized")]
+  boolean IsFullVirt;
+
+  [Description ("The bootloader and arguments to use when in "
+  	        "para-virtualized mode")]
+  string Bootloader;
+  string BootloaderArgs;
+
+  [Description ("The direct-boot kernel for PV guests not using a bootloader")]
+  string Kernel;
+
+  [Description ("The direct-boot ramdisk for PV guests not using a bootloader")]
+  string Ramdisk;
+
+  [Description ("The command-line arguments to be passed to a PV kernel")]
+  string CommandLine;
+
+  [Description ("The device to boot from when in fully-virtualized mode."
+                "One of hd,fd,cdrom.")]
+  string BootDevices[];
+
+  [Description ("The emulator the guest should use during runtime.")]
+  string Emulator;
+
+};
+
+[Description (
+	"A class derived from Virt_VirtualSystemSettingData to represent "
+	"the config of KVM virtual machines/domains running on the system."),
+ Provider("cmpi::Virt_VSSD")
+]
+class KVM_VirtualSystemSettingData : Virt_VirtualSystemSettingData
+{
+
+  [Description ("The list of devices to boot from. hd,fd,cdrom.")]
+  string BootDevices[];
+
+  [Description ("The emulator the guest should use during runtime.")]
+  string Emulator;
+
+};
+
+[Description (
+	"A class derived from Virt_VirtualSystemSettingData to represent "
+	"the config of LXC containers running on the system."),
+ Provider("cmpi::Virt_VSSD")
+]
+class LXC_VirtualSystemSettingData : Virt_VirtualSystemSettingData
+{
+
+  [Description ("Path to the init process for the container")]
+  string InitPath;
+
+};

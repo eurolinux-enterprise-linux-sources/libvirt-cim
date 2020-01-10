@@ -1,0 +1,33 @@
+From 6a13c463d1599a513ad861c4d814ca836650f88e Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Wed, 20 Nov 2013 19:43:17 +0100
+Subject: [PATCH 38/60] libxkutil: Added missing address element for filesystem
+ 'disk'
+
+This was an omission from the original patch series adding
+device address support. For disks of type filesystem the addresses
+were parsed however not written back.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/xmlgen.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libxkutil/xmlgen.c b/libxkutil/xmlgen.c
+index 40e2905..931f0c9 100644
+--- a/libxkutil/xmlgen.c
++++ b/libxkutil/xmlgen.c
+@@ -342,6 +342,9 @@ static const char *disk_fs_xml(xmlNodePtr root, struct disk_device *dev)
+                 return XML_ERROR;
+         xmlNewProp(tmp, BAD_CAST "dir", BAD_CAST dev->virtual_dev);
+ 
++        if (dev->address.ct > 0)
++                return device_address_xml(fs, &dev->address);
++
+         return NULL;
+ }
+ 
+-- 
+2.1.0
+

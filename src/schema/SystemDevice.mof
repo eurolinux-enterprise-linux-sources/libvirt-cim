@@ -1,0 +1,49 @@
+// Copyright IBM Corp. 2007
+
+[Association,
+ Description (
+        "A class to associate a Xen_ComputerSystem with its devices." ),
+ Provider("cmpi::Virt_SystemDevice")
+]
+class Xen_SystemDevice : CIM_SystemDevice
+{
+
+   [Override ( "GroupComponent" )]
+   Xen_ComputerSystem REF GroupComponent;
+
+   [Override ( "PartComponent" )]
+   CIM_LogicalDevice REF PartComponent;
+
+};
+
+[Association,
+ Description (
+        "A class to associate a KVM_ComputerSystem with its devices." ),
+ Provider("cmpi::Virt_SystemDevice")
+]
+class KVM_SystemDevice : CIM_SystemDevice
+{
+
+   [Override ( "GroupComponent" )]
+   KVM_ComputerSystem REF GroupComponent;
+
+   [Override ( "PartComponent" )]
+   CIM_LogicalDevice REF PartComponent;
+
+};
+
+[Association,
+ Description (
+        "A class to associate a LXC_ComputerSystem with its devices." ),
+ Provider("cmpi::Virt_SystemDevice")
+]
+class LXC_SystemDevice : CIM_SystemDevice
+{
+
+   [Override ( "GroupComponent" )]
+   LXC_ComputerSystem REF GroupComponent;
+
+   [Override ( "PartComponent" )]
+   CIM_LogicalDevice REF PartComponent;
+
+};

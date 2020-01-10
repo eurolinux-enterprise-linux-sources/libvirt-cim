@@ -1,0 +1,166 @@
+From a16ca9d025005a755cd1e9b353a376333a958f5b Mon Sep 17 00:00:00 2001
+From: Xu Wang <gesaint@linux.vnet.ibm.com>
+Date: Thu, 27 Mar 2014 11:08:21 -0400
+Subject: [PATCH 52/60] Add virtual controller object definitions to mofs
+
+Add the mofs and registration to support the Controller Logical Device
+and RASD.  The Contoller Logical Device will be a child of the
+CIM_Controller class and the Controller RASD will be a child of
+the CIM_RASD.
+
+Install the mofs and definitions, but don't yet link things up
+
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ Makefile.am                                       |  4 ++-
+ libvirt-cim.spec.in                               |  2 ++
+ schema/Controller.mof                             |  7 +++++
+ schema/Controller.registration                    |  4 +++
+ schema/ResourceAllocationSettingData.mof          | 37 ++++++++++++++++++++++-
+ schema/ResourceAllocationSettingData.registration |  3 +-
+ 6 files changed, 54 insertions(+), 3 deletions(-)
+ create mode 100644 schema/Controller.mof
+ create mode 100644 schema/Controller.registration
+
+diff --git a/Makefile.am b/Makefile.am
+index 69b65cf..24b11af 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,4 +1,4 @@
+-# Copyright IBM Corp. 2007
++# Copyright IBM Corp. 2007-2014
+ AUTOMAKE_OPTIONS=dist-bzip2
+ 
+ SUBDIRS = libxkutil src doc base_schema
+@@ -52,6 +52,7 @@ MOFS = \
+ 	$(top_srcdir)/schema/ServiceAffectsElement.mof \
+ 	$(top_srcdir)/schema/KVMRedirectionSAP.mof \
+ 	$(top_srcdir)/schema/DisplayController.mof \
++	$(top_srcdir)/schema/Controller.mof \
+ 	$(top_srcdir)/schema/PointingDevice.mof \
+ 	$(top_srcdir)/schema/GraphicsPool.mof \
+ 	$(top_srcdir)/schema/InputPool.mof \
+@@ -142,6 +143,7 @@ REGS = \
+ 	$(top_srcdir)/schema/ServiceAffectsElement.registration \
+ 	$(top_srcdir)/schema/KVMRedirectionSAP.registration \
+ 	$(top_srcdir)/schema/DisplayController.registration \
++	$(top_srcdir)/schema/Controller.registration \
+ 	$(top_srcdir)/schema/PointingDevice.registration \
+ 	$(top_srcdir)/schema/GraphicsPool.registration \
+ 	$(top_srcdir)/schema/InputPool.registration \
+diff --git a/libvirt-cim.spec.in b/libvirt-cim.spec.in
+index 01ee329..f4e4fcf 100644
+--- a/libvirt-cim.spec.in
++++ b/libvirt-cim.spec.in
+@@ -110,6 +110,7 @@ rm -fr $RPM_BUILD_ROOT
+     %{_datadir}/%{name}/ServiceAffectsElement.registration \\\
+     %{_datadir}/%{name}/KVMRedirectionSAP.registration \\\
+     %{_datadir}/%{name}/DisplayController.registration \\\
++    %{_datadir}/%{name}/Controller.registration \\\
+     %{_datadir}/%{name}/PointingDevice.registration \\\
+     %{_datadir}/%{name}/GraphicsPool.registration \\\
+     %{_datadir}/%{name}/InputPool.registration \\\
+@@ -171,6 +172,7 @@ rm -fr $RPM_BUILD_ROOT
+     %{_datadir}/%{name}/ServiceAffectsElement.mof \\\
+     %{_datadir}/%{name}/KVMRedirectionSAP.mof \\\
+     %{_datadir}/%{name}/DisplayController.mof \\\
++    %{_datadir}/%{name}/Controller.mof \\\
+     %{_datadir}/%{name}/PointingDevice.mof \\\
+     %{_datadir}/%{name}/GraphicsPool.mof \\\
+     %{_datadir}/%{name}/InputPool.mof \\\
+diff --git a/schema/Controller.mof b/schema/Controller.mof
+new file mode 100644
+index 0000000..0805aa9
+--- /dev/null
++++ b/schema/Controller.mof
+@@ -0,0 +1,7 @@
++// Copyright IBM Corp. 2014
++
++[ Provider("cmpi::Virt_Device")
++]
++class KVM_Controller : CIM_Controller
++{
++};
+diff --git a/schema/Controller.registration b/schema/Controller.registration
+new file mode 100644
+index 0000000..5f59a20
+--- /dev/null
++++ b/schema/Controller.registration
+@@ -0,0 +1,4 @@
++# Copyright IBM Corp. 2014
++
++# Classname Namespace ProviderName ProviderModule ProviderTypes
++KVM_Controller root/virt Virt_Device Virt_Device instance
+diff --git a/schema/ResourceAllocationSettingData.mof b/schema/ResourceAllocationSettingData.mof
+index 6b649de..9c387f0 100644
+--- a/schema/ResourceAllocationSettingData.mof
++++ b/schema/ResourceAllocationSettingData.mof
+@@ -1,4 +1,4 @@
+-// Copyright IBM Corp. 2007, 2013
++// Copyright IBM Corp. 2007-2014
+ 
+ [Description ("Xen virtual disk configuration"),
+  Provider("cmpi::Virt_RASD")
+@@ -328,6 +328,41 @@ class LXC_InputResourceAllocationSettingData : LXC_ResourceAllocationSettingData
+       string BusType;
+ };
+ 
++[Description ("KVM virtual controller device. It is identified by: "
++              "CIM_ResourceAllocationSettingData.ResourceType=1 ('Other'), "
++              "CIM_ResourceAllocationSettingData.OtherResourceType='controller'"
++              " and CIM_ResourceAllocationSettingData.ResourceSubType set to "
++              "one of 'ide', 'fdc', 'scsi', 'sata', 'ccid', 'virtio-serial', "
++              "or 'pci'."),
++ Provider("cmpi::Virt_RASD")
++]
++class KVM_ControllerResourceAllocationSettingData : KVM_ResourceAllocationSettingData
++{
++      [Description ("Order in which the bus controller is encountered. "
++                    "The order is controller type scoped.")]
++      uint64 Index;
++
++      [Description ("Optional string providing a specific model "
++                    "information based on the controller type.")]
++      string Model;
++
++      [Description ("The 'virtio-serial' controller uses the Ports and "
++                    "Vectors to control how many devices can be connected "
++                    "through the controller.")]
++      string Ports;
++      string Vectors;
++
++      [Description ("Number of queues for the controller.")]
++      string Queues;
++
++      [Description ("For controllers that are themselves devices on a "
++                    "bus an optional element to specify the exact "
++                    "relationship of the controller to its master bus. "
++                    "Stored in the property and value arrays.")]
++      string AddressProperties[];
++      string AddressValues[];
++};
++
+ [Description ("Xen virtual network pool settings"),
+  Provider("cmpi::Virt_RASD")
+ ]
+diff --git a/schema/ResourceAllocationSettingData.registration b/schema/ResourceAllocationSettingData.registration
+index b969bfe..74df857 100644
+--- a/schema/ResourceAllocationSettingData.registration
++++ b/schema/ResourceAllocationSettingData.registration
+@@ -1,4 +1,4 @@
+-# Copyright IBM Corp. 2007, 2013
++# Copyright IBM Corp. 2007-2014
+ # Classname Namespace ProviderName ProviderModule ProviderTypes
+ Xen_DiskResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+ Xen_NetResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+@@ -14,6 +14,7 @@ KVM_MemResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+ KVM_GraphicsResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+ KVM_InputResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+ KVM_ConsoleResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
++KVM_ControllerResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+ LXC_MemResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+ LXC_DiskResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+ LXC_ProcResourceAllocationSettingData root/virt Virt_RASD Virt_RASD instance
+-- 
+2.1.0
+

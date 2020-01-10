@@ -1,0 +1,81 @@
+From 222a32198b3584ae221474a6d7288c91b8e76578 Mon Sep 17 00:00:00 2001
+From: John Ferlan <jferlan@redhat.com>
+Date: Thu, 27 Mar 2014 16:36:32 -0400
+Subject: [PATCH 56/60] Add MOFS and change install for ControllerPools
+
+Add the new MOF and modify the build/install to handle.
+
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ Makefile.am                        | 2 ++
+ libvirt-cim.spec.in                | 2 ++
+ schema/ControllerPool.mof          | 6 ++++++
+ schema/ControllerPool.registration | 3 +++
+ 4 files changed, 13 insertions(+)
+ create mode 100644 schema/ControllerPool.mof
+ create mode 100644 schema/ControllerPool.registration
+
+diff --git a/Makefile.am b/Makefile.am
+index 24b11af..e332b5a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -56,6 +56,7 @@ MOFS = \
+ 	$(top_srcdir)/schema/PointingDevice.mof \
+ 	$(top_srcdir)/schema/GraphicsPool.mof \
+ 	$(top_srcdir)/schema/InputPool.mof \
++	$(top_srcdir)/schema/ControllerPool.mof \
+ 	$(top_srcdir)/schema/HostedAccessPoint.mof \
+ 	$(top_srcdir)/schema/ServiceAccessBySAP.mof \
+ 	$(top_srcdir)/schema/SAPAvailableForElement.mof \
+@@ -147,6 +148,7 @@ REGS = \
+ 	$(top_srcdir)/schema/PointingDevice.registration \
+ 	$(top_srcdir)/schema/GraphicsPool.registration \
+ 	$(top_srcdir)/schema/InputPool.registration \
++	$(top_srcdir)/schema/ControllerPool.registration \
+ 	$(top_srcdir)/schema/HostedAccessPoint.registration \
+ 	$(top_srcdir)/schema/ServiceAccessBySAP.registration \
+ 	$(top_srcdir)/schema/SAPAvailableForElement.registration \
+diff --git a/libvirt-cim.spec.in b/libvirt-cim.spec.in
+index f4e4fcf..d876b81 100644
+--- a/libvirt-cim.spec.in
++++ b/libvirt-cim.spec.in
+@@ -114,6 +114,7 @@ rm -fr $RPM_BUILD_ROOT
+     %{_datadir}/%{name}/PointingDevice.registration \\\
+     %{_datadir}/%{name}/GraphicsPool.registration \\\
+     %{_datadir}/%{name}/InputPool.registration \\\
++    %{_datadir}/%{name}/ControllerPool.registration \\\
+     %{_datadir}/%{name}/HostedAccessPoint.registration \\\
+     %{_datadir}/%{name}/ServiceAccessBySAP.registration \\\
+     %{_datadir}/%{name}/SAPAvailableForElement.registration \\\
+@@ -176,6 +177,7 @@ rm -fr $RPM_BUILD_ROOT
+     %{_datadir}/%{name}/PointingDevice.mof \\\
+     %{_datadir}/%{name}/GraphicsPool.mof \\\
+     %{_datadir}/%{name}/InputPool.mof \\\
++    %{_datadir}/%{name}/ControllerPool.mof \\\
+     %{_datadir}/%{name}/HostedAccessPoint.mof \\\
+     %{_datadir}/%{name}/ServiceAccessBySAP.mof \\\
+     %{_datadir}/%{name}/SAPAvailableForElement.mof \\\
+diff --git a/schema/ControllerPool.mof b/schema/ControllerPool.mof
+new file mode 100644
+index 0000000..6dbb8a8
+--- /dev/null
++++ b/schema/ControllerPool.mof
+@@ -0,0 +1,6 @@
++// Copyright Red Hat Corp. 2014
++
++[Provider("cmpi::Virt_DevicePool")]
++class KVM_ControllerPool : CIM_ResourcePool
++{
++};
+diff --git a/schema/ControllerPool.registration b/schema/ControllerPool.registration
+new file mode 100644
+index 0000000..0785f83
+--- /dev/null
++++ b/schema/ControllerPool.registration
+@@ -0,0 +1,3 @@
++# Copyright Red Hat Corp. 2014
++# Classname Namespace ProviderName ProviderModule ProviderTypes
++KVM_ControllerPool root/virt Virt_DevicePool Virt_DevicePool instance
+-- 
+2.1.0
+

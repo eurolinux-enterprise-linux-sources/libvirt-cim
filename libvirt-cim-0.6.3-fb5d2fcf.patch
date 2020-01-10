@@ -1,0 +1,209 @@
+From fb5d2fcfe770d5446a6d8fcdcd405c6645c4dfb0 Mon Sep 17 00:00:00 2001
+From: John Ferlan <jferlan@redhat.com>
+Date: Wed, 22 Jan 2014 16:09:04 -0500
+Subject: [PATCH 46/60] Adjust sscanf format string
+
+Currently the sscanf() calls use "%as" or "%a[" in order to allocate and
+return strings for read fields.  It was pointed out to me that this is an
+older and non-portable method.  Instead the "%ms" or "%m[" should be used.
+
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/acl_parsing.c                   |  2 +-
+ libxkutil/device_parsing.c                |  2 +-
+ libxkutil/misc_util.c                     |  2 +-
+ src/Virt_ComputerSystemIndication.c       |  2 +-
+ src/Virt_Device.c                         |  6 +++---
+ src/Virt_DevicePool.c                     |  8 ++++----
+ src/Virt_SettingsDefineState.c            |  2 +-
+ src/Virt_VirtualSystemManagementService.c | 12 ++++++------
+ 8 files changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/libxkutil/acl_parsing.c b/libxkutil/acl_parsing.c
+index 3de6a65..c368b99 100644
+--- a/libxkutil/acl_parsing.c
++++ b/libxkutil/acl_parsing.c
+@@ -666,7 +666,7 @@ int parse_rule_id(const char *rule_id, char **filter, int *index)
+ 
+         if ((filter == NULL) || (index == NULL))
+                 return 0;
+-        ret = sscanf(rule_id, "%as[^:]:%u", filter, index);
++        ret = sscanf(rule_id, "%ms[^:]:%u", filter, index);
+         if (ret != 2) {
+                 free(*filter);
+                 *filter = NULL;
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index 4dd9e58..c9ae886 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -1463,7 +1463,7 @@ int parse_fq_devid(const char *devid, char **host, char **device)
+ {
+         int ret;
+ 
+-        ret = sscanf(devid, "%a[^/]/%a[^\n]", host, device);
++        ret = sscanf(devid, "%m[^/]/%m[^\n]", host, device);
+         if (ret != 2) {
+                 free(*host);
+                 free(*device);
+diff --git a/libxkutil/misc_util.c b/libxkutil/misc_util.c
+index 2164dd0..6a54815 100644
+--- a/libxkutil/misc_util.c
++++ b/libxkutil/misc_util.c
+@@ -671,7 +671,7 @@ int parse_id(const char *id,
+         char *tmp_pfx = NULL;
+         char *tmp_name = NULL;
+ 
+-        ret = sscanf(id, "%a[^:]:%a[^\n]", &tmp_pfx, &tmp_name);
++        ret = sscanf(id, "%m[^:]:%m[^\n]", &tmp_pfx, &tmp_name);
+         if (ret != 2) {
+                 ret = 0;
+                 goto out;
+diff --git a/src/Virt_ComputerSystemIndication.c b/src/Virt_ComputerSystemIndication.c
+index 20c60bc..32bee97 100644
+--- a/src/Virt_ComputerSystemIndication.c
++++ b/src/Virt_ComputerSystemIndication.c
+@@ -382,7 +382,7 @@ static char *sys_name_from_xml(char *xml)
+                 goto out;
+         }
+ 
+-        rc = sscanf(tmp, "<name>%a[^<]s</name>", &name);
++        rc = sscanf(tmp, "<name>%m[^<]s</name>", &name);
+         if (rc != 1) {
+                 name = NULL;
+         }
+diff --git a/src/Virt_Device.c b/src/Virt_Device.c
+index b93e592..12ae6bd 100644
+--- a/src/Virt_Device.c
++++ b/src/Virt_Device.c
+@@ -675,7 +675,7 @@ static CMPIStatus return_enum_devices(const CMPIObjectPath *reference,
+ 
+         s = enum_devices(_BROKER,
+                          reference,
+-                         NULL, 
++                         NULL,
+                          res_type_from_device_classname(CLASSNAME(reference)),
+                          &list);
+         if (s.rc != CMPI_RC_OK)
+@@ -696,7 +696,7 @@ static int parse_devid(const char *devid, char **dom, char **dev)
+ {
+         int ret;
+ 
+-        ret = sscanf(devid, "%a[^/]/%as", dom, dev);
++        ret = sscanf(devid, "%m[^/]/%ms", dom, dev);
+         if (ret != 2) {
+                 free(*dom);
+                 free(*dev);
+@@ -711,7 +711,7 @@ static int proc_dev_list(uint64_t quantity,
+ {
+         int i;
+ 
+-        *list = (struct virt_device *)calloc(quantity, 
++        *list = (struct virt_device *)calloc(quantity,
+                                              sizeof(struct virt_device));
+ 
+         for (i = 0; i < quantity; i++) {
+diff --git a/src/Virt_DevicePool.c b/src/Virt_DevicePool.c
+index d6e51ba..aae7ed4 100644
+--- a/src/Virt_DevicePool.c
++++ b/src/Virt_DevicePool.c
+@@ -383,11 +383,11 @@ static bool _diskpool_is_member(virConnectPtr conn,
+ 
+         pool_vol = virStoragePoolLookupByVolume(vol);
+         if (vol != NULL) {
+-                pool_name = virStoragePoolGetName(pool_vol);                
++                pool_name = virStoragePoolGetName(pool_vol);
+                 if ((pool_name != NULL) && (STREQC(pool_name, pool->tag)))
+                         result = true;
+         }
+-        
++
+  out:
+         CU_DEBUG("Image %s in pool %s: %s",
+                  file,
+@@ -405,7 +405,7 @@ static bool parse_diskpool_line(struct tmp_disk_pool *pool,
+ {
+         int ret;
+ 
+-        ret = sscanf(line, "%as %as", &pool->tag, &pool->path);
++        ret = sscanf(line, "%ms %ms", &pool->tag, &pool->path);
+         if (ret != 2) {
+                 free(pool->tag);
+                 free(pool->path);
+@@ -1610,7 +1610,7 @@ CMPIStatus get_pool_by_name(const CMPIBroker *broker,
+                 goto out;
+         }
+ 
+-        ret = sscanf(id, "%*[^/]/%a[^\n]", &poolid);
++        ret = sscanf(id, "%*[^/]/%m[^\n]", &poolid);
+         if (ret != 1) {
+                 cu_statusf(broker, &s,
+                            CMPI_RC_ERR_NOT_FOUND,
+diff --git a/src/Virt_SettingsDefineState.c b/src/Virt_SettingsDefineState.c
+index be2ded5..c8cda97 100644
+--- a/src/Virt_SettingsDefineState.c
++++ b/src/Virt_SettingsDefineState.c
+@@ -298,7 +298,7 @@ static CMPIStatus vssd_to_vs(const CMPIObjectPath *ref,
+                 goto out;
+         }
+ 
+-        ret = sscanf(id, "%a[^:]:%as", &pfx, &name);
++        ret = sscanf(id, "%m[^:]:%ms", &pfx, &name);
+         if (ret != 2) {
+                 cu_statusf(_BROKER, &s,
+                            CMPI_RC_ERR_FAILED,
+diff --git a/src/Virt_VirtualSystemManagementService.c b/src/Virt_VirtualSystemManagementService.c
+index 83e5c53..3e7785e 100644
+--- a/src/Virt_VirtualSystemManagementService.c
++++ b/src/Virt_VirtualSystemManagementService.c
+@@ -1330,7 +1330,7 @@ static int parse_console_address(const char *id,
+ 
+         CU_DEBUG("Entering parse_console_address, address is %s", id);
+ 
+-        ret = sscanf(id, "%a[^:]:%as", &tmp_path, &tmp_port);
++        ret = sscanf(id, "%m[^:]:%ms", &tmp_path, &tmp_port);
+ 
+         if (ret != 2) {
+                 ret = 0;
+@@ -1366,10 +1366,10 @@ static int parse_sdl_address(const char *id,
+ 
+         CU_DEBUG("Entering parse_sdl_address, address is %s", id);
+ 
+-        ret = sscanf(id, "%a[^:]:%as", &tmp_xauth, &tmp_display);
++        ret = sscanf(id, "%m[^:]:%ms", &tmp_xauth, &tmp_display);
+ 
+         if (ret <= 0) {
+-                ret = sscanf(id, ":%as", &tmp_display);
++                ret = sscanf(id, ":%ms", &tmp_display);
+                 if (ret <= 0) {
+                         if (STREQC(id, ":")) {
+                                 /* do nothing, it is empty */
+@@ -1417,7 +1417,7 @@ static int parse_ip_address(const char *id,
+         CU_DEBUG("Entering parse_ip_address, address is %s", id);
+         if (strstr(id, "[") != NULL) {
+                 /* its an ipv6 address */
+-                ret = sscanf(id, "%a[^]]]:%as",  &tmp_ip, &tmp_port);
++                ret = sscanf(id, "%m[^]]]:%ms",  &tmp_ip, &tmp_port);
+                 if (ret >= 1) {
+                         tmp_ip = realloc(tmp_ip, strlen(tmp_ip) + 2);
+                         if (tmp_ip == NULL) {
+@@ -1427,7 +1427,7 @@ static int parse_ip_address(const char *id,
+                         strcat(tmp_ip, "]");
+                 }
+         } else {
+-                ret = sscanf(id, "%a[^:]:%as", &tmp_ip, &tmp_port);
++                ret = sscanf(id, "%m[^:]:%ms", &tmp_ip, &tmp_port);
+         }
+ 
+         /* ret == 2: address and port, ret == 1: address only */
+@@ -1464,7 +1464,7 @@ static bool parse_console_url(const char *url,
+ 
+         CU_DEBUG("Entering parse_console_url:'%s'", url);
+ 
+-        if (sscanf(url,"%a[^:]://%as", &tmp_protocol, &tmp_address) != 2)
++        if (sscanf(url,"%m[^:]://%ms", &tmp_protocol, &tmp_address) != 2)
+                 goto out;
+ 
+         if (parse_ip_address(tmp_address, host, port) < 1)
+-- 
+2.1.0
+

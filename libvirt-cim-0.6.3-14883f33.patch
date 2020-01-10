@@ -1,0 +1,32 @@
+From 14883f33cb82bb5d3dcdf1c8931a51eae672f408 Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Fri, 11 Oct 2013 13:47:35 +0200
+Subject: [PATCH 36/60] libxkutil: clean entire device structure to avoid
+ memory corruption
+
+If cleanup_virt_device is called twice (e.g. during modify resource)
+a double free can occur because only the dev substructure has
+been memset to zero. Now zeroing the entire structure.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libxkutil/device_parsing.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libxkutil/device_parsing.c b/libxkutil/device_parsing.c
+index 8a90653..56e39c7 100644
+--- a/libxkutil/device_parsing.c
++++ b/libxkutil/device_parsing.c
+@@ -326,7 +326,7 @@ void cleanup_virt_device(struct virt_device *dev)
+ 
+         free(dev->id);
+ 
+-        memset(&dev->dev, 0, sizeof(dev->dev));
++        memset(dev, 0, sizeof(*dev));
+ }
+ 
+ void cleanup_virt_devices(struct virt_device **_devs, int count)
+-- 
+2.1.0
+

@@ -1,0 +1,387 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="">
+  <title>Libvirt-CIM: The CIM provider for libvirt</title>
+</head>
+
+<body bgcolor="#ffffff">
+<h1 align="center">Libvirt-CIM: The CIM provider for libvirt</h1>
+
+<h1>Note: this is the flat content of the <a href="index.html">web site</a></h1>
+
+<h1 style="text-align: center">libvirt-cim</h1>
+
+<h3>What is <span class="style1">libvirt-cim?</span></h3>
+
+<p>Libvirt-CIM is a CIM provider for managing linux virtualization
+  platforms using libvirt.  It is written in C and should work in any
+  CIMOM that supports CMPI 2.0 providers.  The intent is to implement
+  the SVPC virtualization class model currently available in the DMTF
+  Experimental 2.16 schema.
+</p>
+
+<h2><a name="News">Releases</a></h2>
+
+<p>Here is the list of official releases.  Developers and people
+looking for the latest features should check
+the <a href="downloads.html">downloads</a> page for a snapshot of the
+repository.</p>
+
+<h3>livirt-cim-0.1: Jan 14 2008</h3>
+
+<ul>
+  <li>Initial release</li>
+  <li>Focused on Xen paravirt guest support</li>
+</ul>
+
+<h3>libcmpiutil-0.1: Nov 30 2007</h3>
+
+<ul>
+  <li>Initial release</li>
+</ul>
+
+<h2><a name="Introducti">Introduction</a></h2>
+
+<p>Libvirt-CIM is a CIM provider for managing linux virtualization
+  platforms using libvirt.  It is written in C and should work in any
+  CIMOM that supports CMPI 2.0 providers.  The intent is to implement
+  the SVPC virtualization class model currently available in the DMTF
+  Experimental 2.16 schema.
+</p>
+
+<p>The providers are currently under heavy development.  Focus is on
+  Xen support right now, which means some of the providers have some
+  "shortcuts" hard-coded to Xen right now.  The long-term goal is to
+  support all of the platforms that libvirt supports with minimal
+  differences.
+</p>
+
+<h2><a name="Downloads">Downloads</a></h2>
+
+<p>Official releases can be found on the
+libvirt.org <a href="ftp://libvirt.org/libvirt-cim">FTP</a> server.
+Alternatively, you can grab a
+<a href="http://libvirt.org/hg/libvirt-cim/archive/tip.tar.gz">tarball</a> or 
+<a href="http://libvirt.org/hg/libvirt-cim/archive/tip.zip">zip</a>
+file snapshot of the development repository.  These snapshots will
+have the latest features (and bugs).</p>
+
+
+<p>The libvirt-cim development tree can be found in the
+  <a href="http://libvirt.org/hg">libvirt.org/hg</a> repository.
+</p>
+
+<p>To get a copy of the development tree, use 
+  <a href="http://www.selenic.com/mercurial/wiki/">mercurial</a>'s
+  clone feature:
+</p>
+
+<p><code>$ hg clone http://libvirt.org/hg/libvirt-cim</code></p>
+
+
+<h2><a name="Patches">Patches</a></h2>
+
+<p>To submit patches to libvirt-cim, you must follow the DCO process, outlined
+below:</p>
+
+<h3>Developer's Certificate of Origin 1.1</h3>
+<p>By making a contribution to this project, I certify that:</p>
+<ol>
+<li>
+  <p>
+    The contribution was created in whole or in part by me and I 
+    have the right to submit it under the open source license indicated in 
+    the file; or
+  </p>
+</li>
+<li>
+  <p>
+    The contribution is based upon previous work that, to the best of my 
+    knowledge, is covered under an appropriate open source license and I have the 
+    right under that license to submit that work with modifications, whether 
+    created in whole or in part by me, under the same open source license 
+    (unless I am permitted to submit under a different license), as indicated in 
+    the file; or
+  </p>
+</li>
+<li>
+  <p>
+    The contribution was provided directly to me by some other person who 
+    certified (1), (2) or (3) and I have not modified it.
+  </p>
+</li>
+<li>
+  <p>
+    I understand and agree that this project and the contribution are public and 
+    that a record of the contribution (including all personal information I 
+    submit with it, including my sign-off) is maintained indefinitely and may be 
+    redistributed consistent with this project or the open source license(s) 
+    involved.
+  </p>
+</li>
+</ol>
+
+<p>then you just add a line saying</p>
+
+<p style="text-align:center">
+  Signed-off-by: Random J Developer &lt;random@developer.example.org&gt;
+</p>
+
+<p>using your real name (sorry, no pseudonyms or anonymous contributions.)</p>
+
+<h3>Guidelines for Submitting Patches.</h3>
+<p>
+  Patches should be submitted using Mercurial's patchbomb extension,  and we 
+  recommend using the queues extension as well.  On top of that, we have some 
+  guidelines you should follow when submitting patches.  This makes reviewing 
+  patches easier, which in turns improves the chances of your patch being 
+  accepted in a timely fashion.
+</p>
+<p>
+  For help on how to use the patchbomb extension, see 
+  <a href="http://hgbook.red-bean.com/hgbookch14.html">Section 14.4</a> of <i>
+  Distributed revision control with Mercurial</i>.
+</p>
+<p>
+  For help on the queues extension, see 
+  <a href="http://hgbook.red-bean.com/hgbookch12.html">Chapter 12</a>.
+</p>
+
+<h4>Single Patches:</h4>
+<ol>
+<li>
+  <p>
+    When you add a patch to the queue you have an idea of where you're going with 
+    it, and the commit message should reflect that.  Be specific.  Avoid  just 
+    saying something like, "Various fixes to AllocationCapabilities."  Add a list 
+    of what was actually fixed, like, "Add EnumInstanceNames support," and, 
+    "Eliminate duplicate instances."
+</p>
+</li>
+<li>
+  <p>
+    The first line of your commit message will be the subject of the patch email 
+    when you send it out, so write it like a subject.  Keep it short and to the 
+    point, then start a new line and feel free to be as verbose as you need to 
+    be.  The entire commit message will be included in the patch.
+  </p>
+</li>
+<li>
+  <p>
+    Stay on task with a patch.  If you notice other problems while you are 
+    working on a patch, and they are not most definitely specific to your patch, 
+    they should be another patch.  The same goes for nitpicking.  While it might 
+    be only a line or two here and there that is off track, this is actually one 
+    of the easiest ways to make a patch difficult to review.  All the trivial 
+    changes hide what is really going on.  Make the unrelated changes a new 
+    patch or don't make them at all.
+  </p>
+</li>
+<li>
+  <p>
+    If your patch addresses a strange issue or a rare edge case that the 
+    reviewers are unlikely to be familiar with, make sure the commit message 
+    include some example testcase with results, so the reviewers can verify 
+    your patch more quickly.
+  </p>
+</li>
+<li>
+  <p>
+    Before you email, export.  If you have a patch called "alloc_fixes", which 
+    would be emailed with "hg email alloc_fixes", you should first run "hg export 
+    alloc_fixes".  This lets you review your patch.  Does it have any typos in 
+    the comments?  Did you accidentally include an irrelevant change?  Is your 
+    commit message still accurate and useful? This is the single biggest step in 
+    ensuring you have a good patch.
+  </p>
+</li>
+<li>
+  <p>
+    If your patch needs to be reworked and resent, prepend a "version number" to 
+    the first line of the commit message.  For example, "Add EnumInstance to 
+    RASD," becomes "#2 Add EnumInstance to RASD."  This helps mail readers thread 
+    discussions correctly and helps maintainers know they are applying the right 
+    version of your patch.  At the end of the commit message, explain what is 
+    different from one version to the next.  Nobody likes having to diff a diff.
+  </p>
+</li>
+<li>
+  <p>
+    If your patch depends on a patch that exists on the mailing list but not in 
+    the tree, it is okay to send your patch to the list as long as your commit 
+    message mentions the dependency.  It is also a good idea to import the 
+    patch into your tree before you make your patch.  For example, a new patch 
+    called "cu_statusf API change" is on the list, and your patch needs the new 
+    API.  Save the email (no need to trim headers) as api_change.eml, then do 
+    "hg qimport api_change.eml" and "hg qpush" so that the patch is applied to 
+    your tree.  Now write your patch on top of it.  You should still indicate 
+    the dependency in your commit message.
+</li>
+</ol>
+
+<h4>Patchsets:</h4>
+<ol>
+<li>
+  <p>
+    When you send a group of patches, Mercurial's email extension will create a 
+    "header" email.  Make the subject and body of that email meaningful, so we 
+    know how the patches relate.  It's easy to say, "Each patch has a commit 
+    message, it's obvious how they work together," but the rest of the list 
+    usually won't agree with that.  If the commit messages for each patch are 
+    good, you shouldn't need more than a sentence or two to tie them all 
+    together, but you do need it.
+  </p>
+</li>
+<li>
+  <p>
+    If any of your patches are rejected and you rework them, resend the entire 
+    set.  This prevents things like, "So use patch 1 of 4 from the set I sent 
+    yesterday, 2 and 3 of 4 from the patch I sent an hour later, and patch 4 
+    of 4 from today."
+  </p>
+</li> 
+<li>
+  <p>
+    If you resend a patchset, apply part (6) of the Single Patches guidelines to 
+    your "Patch [0 of 3]" header email, for all the same reasons.
+  </p>
+</li>
+</ol>
+
+<p>Questions/Comments on the Guidelines should be directed to:</p>
+<p>
+  Jay Gagnon 
+  <a href="mailto:grendel@linux.vnet.ibm.com">grendel@linux.vnet.ibm.com</a>
+  <br>
+  Patch Compliance Officer
+</p>
+
+<h2><a name="Schema">Schema</a></h2>
+
+<p>The libvirt-cim provider depends on an installed 
+  <a href="http://www.dmtf.org/standards/cim/cim_schema_v216/">DMTF
+  CIM v2.16</a> Experimental schema.  The package can be obtained
+<a href="http://www.dmtf.org/standards/cim/cim_schema_v216/cimv216Experimental-MOFs.zip">here</a>.</p>
+
+<h4>To install the schema in Pegasus:</h4>
+
+<p><code>
+  $ PEGASUS_REPO=/var/lib/Pegasus # adjust this as needed<br/>
+  $ mkdir cim216<br/>
+  $ cd cim216<br/>
+  $ unzip $PATH_TO_ZIPFILE<br/>
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/virt cimv216.mof<br/>
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/virt qualifiers.mof<br/>
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/virt qualifiers_optional.mof<br/>
+  $ sudo cimmofl -uc -aEV -R$PEGASUS_REPO -n /root/interop cimv216-interop.mof<br/>
+</code></p>
+
+<h4>To install the schema in SFCB:</h4>
+
+<p><code>
+  $ SFCB_CIM=/usr/local/share/sfcb/CIM # adjust this as needed<br/>
+  $ mkdir cim216<br/>
+  $ cd cim216<br/>
+  $ unzip $PATH_TO_ZIPFILE<br/>
+  $ mv cimv216.mof CIM_Schema.mof<br/>
+  $ sudo cp * $SFCB_CIM<br/>
+  $ sudo sfcbrepos<br/>
+</code></p>
+
+<p><strong>Note:</strong> in both cases, the CIM v2.16 schema seems to have a
+    few classes that don't register correctly.  You may need to
+    disable installation of classes with something like the
+    following:
+</p>
+
+<p><code>
+--- CIM_Schema.mof      2007-10-15 00:15:44.000000000 -0700<br/>
++++ cimv216.mof 2007-10-22 10:11:19.000000000 -0700<br/>
+@@ -507,3 +507,3 @@<br/>
+ #pragma include ("Policy/CIM_SharedSecretAuthentication.mof")<br/>
+-#pragma include ("Security/CIM_SecurityIndication.mof")<br/>
++//#pragma include ("Security/CIM_SecurityIndication.mof")<br/>
+ #pragma include ("Support/PRS_Activity.mof")<br/>
+@@ -728,4 +728,4 @@<br/>
+ #pragma include ("Policy/CIM_PolicyConditionInPolicyRule.mof")<br/>
+-#pragma include ("Security/CIM_IPNetworkSecurityIndication.mof")<br/>
+-#pragma include ("Security/CIM_IPPacketFilterIndication.mof")<br/>
++//#pragma include ("Security/CIM_IPNetworkSecurityIndication.mof")<br/>
++//#pragma include ("Security/CIM_IPPacketFilterIndication.mof")<br/>
+ #pragma include ("Support/PRS_ActivityContact.mof")<br/>
+</code></p>
+
+<p><strong>cimv216-interop.mof</strong> is not part of the official DMTF 
+    CIM v2.16 schema package. Please create with the following content:
+</p>
+
+<p><code>
+#pragma locale ("en_US")<br/>
+#pragma include ("qualifiers.mof")<br/>
+#pragma include ("qualifiers_optional.mof")<br/>
+#pragma include ("Core/CIM_ManagedElement.mof")<br/>
+#pragma include ("Interop/CIM_RegisteredProfile.mof")<br/>
+#pragma include ("Interop/CIM_RegisteredSubProfile.mof")<br/>
+#pragma include ("Core/CIM_Dependency.mof")<br/>
+#pragma include ("Interop/CIM_ElementConformsToProfile.mof")<br/>
+#pragma include ("Interop/CIM_ReferencedProfile.mof")<br/>
+#pragma include ("Interop/CIM_SubProfileRequiresProfile.mof")<br/>
+</code></p>
+
+<h2><a name="Platforms">Platform Support</a></h2>
+
+<p>Currently, libvirt-cim is targetting Xen as its primary support
+  platform because is has the largest installed user base.  The
+  long-term plan is to support many others (hopefully any that libvirt
+  supports).  This includes KVM and containers.
+</p>
+
+<p>The code base currently has many Xen-specific "shortcuts" that need
+  to be resolved and generalized in order to support other platforms.
+  A short list of these may include:</p>
+<ul>
+  <li>The XML generation and parsing code and the related device
+    modeling code.</li>
+  <li>The libvirt connection logic.  Right now, (in most places) we
+    detect the current hypervisor in use and connect to libvirt
+    appropriately.  This may or may not be the correct behavior in a
+    situation where you could need to support containers and QEMU
+    virtual machines.</li>
+  <li>Some lingering hard-coded "Xen_Foo" class names.</li>
+</ul>
+  
+<p>Further, supporting new platforms have some registration and
+  modeling implications:</p>
+<ul>
+  <li>Additions to the MOF and registration files for "branded"
+    classes (Xen_Foo, KVM_Foo, etc)</li>
+  <li>Modifications to some of the association providers that register
+    separate CMPI provider structures for each class type they handle
+    (to avoid duplicate results in the general case)</li>
+</ul>
+
+<h2><a name="architecture">Architecture</a></h2>
+
+<p>The libvirt-cim provider consists of two major parts:</p>
+
+<ul>
+  <li>The provider classes themselves (<tt>src/</tt>)</li>
+  <li>A helper library of common components (<tt>libxkutil/</tt>)</li>
+</ul>
+
+<p>The provider classes implement the actual CIM class model.  Some of
+  the provider libraries implement one CIM class and one providier.
+  However, many of them perform more than one task.  For example,
+  the <tt>Virt_Device</tt> and <tt>Virt_DevicePool</tt> providers
+  implement the device and device pool classes for each of the major
+  device types: Memory, Processor, Network, and Disk.
+</p>
+
+<p>The helper library contains common routines that almost all of the
+  providers use, such as libvirt connection type detection and device
+  and system XML parsing.  
+</p>
+
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+// Copyright IBM Corp. 2007
+
+[Association,
+ Description (
+       "HostedDependency defines a ManagedElement in the context of "
+       "another ManagedElement in which it resides."),
+ Provider("cmpi::Virt_HostedDependency")
+]
+class Xen_HostedDependency : CIM_HostedDependency 
+{
+};
+
+[Association,
+ Description (
+       "HostedDependency defines a ManagedElement in the context of "
+       "another ManagedElement in which it resides."),
+ Provider("cmpi::Virt_HostedDependency")
+]
+class KVM_HostedDependency : CIM_HostedDependency
+{
+};
+
+[Association,
+ Description (
+       "HostedDependency defines a ManagedElement in the context of "
+       "another ManagedElement in which it resides."),
+ Provider("cmpi::Virt_HostedDependency")
+]
+class LXC_HostedDependency : CIM_HostedDependency
+{
+};
