@@ -1,0 +1,72 @@
+From f18ba71595815c820742e2f12cc30481fc510642 Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Fri, 30 Aug 2013 14:12:20 +0200
+Subject: [PATCH 13/48] build: Don't use /bin/sh unconditionally
+
+provider-register.sh implicitly assumes that the shell has bash-like
+capabilities. On systems like Ubuntu this is not the case leading
+to a make postinstall failure when used with Pegasus.
+Changing the script shebang to /bin/bash to make this explicit.
+Further replace occurrences of sh to $(SHELL) in the Makefile
+invocations of provider-register.sh.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ Makefile.am          | 18 +++++++++---------
+ provider-register.sh |  2 +-
+ 2 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 63ed3c7..9e8e96b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -201,26 +201,26 @@ uninstall-local:
+ 	done
+ 
+ preinstall:
+-	sh -x base_schema/install_base_schema.sh `pwd`/base_schema
++	$(SHELL) -x base_schema/install_base_schema.sh `pwd`/base_schema
+ 
+ # Un/Register the providers and class definitions from/to the current CIMOM.
+ # @CIMSERVER@ is set by the configure script
+ postinstall:
+-	sh provider-register.sh -v -t @CIMSERVER@ -n @CIM_VIRT_NS@ -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(MOFS))
+-	sh provider-register.sh -v -t @CIMSERVER@ -n root/interop -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_MOFS))
+-	sh provider-register.sh -v -t @CIMSERVER@ -n root/cimv2 -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_MOFS))
++	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n @CIM_VIRT_NS@ -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(MOFS))
++	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n root/interop -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_MOFS))
++	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n root/cimv2 -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_MOFS))
+ 	if [[ @CIMSERVER@ = pegasus ]]; then \
+-	sh provider-register.sh -v -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
++	$(SHELL) provider-register.sh -v -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
+ 	fi
+ 	virsh -v | grep -q '^0.3' && cp examples/diskpool.conf $(DISK_POOL_CONFIG) || true
+ 	mkdir -p $(INFO_STORE)
+ 
+ preuninstall:
+-	sh provider-register.sh -v -d -t @CIMSERVER@ -n @CIM_VIRT_NS@ -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(MOFS))
+-	sh provider-register.sh -v -d -t @CIMSERVER@ -n root/interop -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_MOFS))
+-	sh provider-register.sh -v -d -t @CIMSERVER@ -n root/cimv2 -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_MOFS))
++	$(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n @CIM_VIRT_NS@ -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(MOFS))
++	$(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n root/interop -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(INTEROP_MOFS))
++	$(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n root/cimv2 -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(CIMV2_MOFS))
+ 	if [[ @CIMSERVER@ = pegasus ]]; then \
+-	sh provider-register.sh -v -d -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
++	$(SHELL) provider-register.sh -v -d -t @CIMSERVER@ -n root/PG_InterOp -r $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_REGS)) -m $(subst $(top_srcdir)/schema,$(pkgdatadir), $(PGINTEROP_MOFS)); \
+ 	fi
+ 
+ rpm: clean
+diff --git a/provider-register.sh b/provider-register.sh
+index b907df1..b730ef3 100755
+--- a/provider-register.sh
++++ b/provider-register.sh
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/bin/bash
+ # $Id$
+ # ==================================================================
+ # Copyright IBM Corp. 2005
+-- 
+1.8.5.3
+

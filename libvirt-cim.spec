@@ -3,13 +3,91 @@
 Summary: A CIM provider for libvirt
 Name: libvirt-cim
 Version: 0.6.3
-Release: 2%{?dist}%{?extra_release}
+Release: 6%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
 Source: ftp://libvirt.org/libvirt-cim/libvirt-cim-%{version}.tar.gz
 
 # Update configure for aarch64 (bz #925923)
 Patch1: libvirt-cim-aarch64.patch
+
+# Patches 2 -> 10 were added as one submit for libvirt-cim.0.6.3-5.
+# They are listed in the order they were added to the upstream
+# libvirt-cim.git repository. Although Patch10 is the ultimate fix
+# for BZ#1070346, the other patches were cumulative issues seen in
+# since 0.6.3 was generated upstream and pulled into RHEL7. The only
+# change not pulled in was commit id 'f18ba715' as it failed for the
+# s390/s390x brew builds, perhaps due to $(SHELL) not being defined
+# in whatever build environment is installed.
+
+# libvirt-cim.spec.in: Don't install open-pegasus' specific providers
+# Author: Michal Privoznik <mprivozn@redhat.com>
+Patch2: libvirt-cim-0.6.3-19ffef8e.patch
+
+# libvirt-cim.spec.in: Uninstall open-pegasus-specific providers from sfcb
+# Author: Ján Tomko <jtomko@redhat.com>
+Patch3: libvirt-cim-0.6.3-ee74ebc1.patch
+
+# spec: Replace the path to the tar.gz file
+# Author: John Ferlan <jferlan@redhat.com>
+Patch4: libvirt-cim-0.6.3-3c3a541d.patch
+
+# spec: Fix capitalization for version check
+# Author: John Ferlan <jferlan@redhat.com>
+Patch5: libvirt-cim-0.6.3-5d2626f6.patch
+
+# build: Don't use /bin/sh unconditionally
+# Author: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Patch6: libvirt-cim-0.6.3-f18ba715.patch
+
+# build: Fix incorrect provider registration in upgrade path
+# Author: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Patch7: libvirt-cim-0.6.3-1c7dfda2.patch
+
+# build: Fix provider registration issues
+# Author: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Patch8: libvirt-cim-0.6.3-9c1d321b.patch
+
+# schema: Fix class removal with Pegasus
+# Author: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Patch9: libvirt-cim-0.6.3-95f0d418.patch
+
+# spec: Fix docs/*.html packaging issue
+# Author: John Ferlan <jferlan@redhat.com>
+Patch10: libvirt-cim-0.6.3-54778c78.patch
+
+# Use of root/interop instead of root/PG_InterOp
+# Author: John Ferlan <jferlan@redhat.com>
+Patch11: libvirt-cim-0.6.3-a8cfd7dc.patch
+
+# Patches 12 -> 15 were added as one submit for libvirt-cim.0.6.3-6.
+# They are listed in order as there were added upstream. Since applying
+# the changes without merge conflicts relies on previous changes being
+# included, it was easier to make one submit for all 4 changes. Of the
+# changes only Patch12 doesn't have an existing RHEL6* based bug, but
+# it's an important enough change to be included.
+
+# get_dominfo: Use VIR_DOMAIN_XML_SECURE more wisely
+# Author: Michal Privoznik <mprivozn@redhat.com>
+Patch12: libvirt-cim-0.6.3-7e164fbd.patch
+
+# Add dumpCore tag support to memory
+# Author: Xu Wang <gesaint@linux.vnet.ibm.com>
+# Added to libvirt-cim.0.6.1-9 in RHEL 6.5 as part of BZ#1000937
+Patch13: libvirt-cim-0.6.3-de03c66f.patch
+
+# libxkutil: Improve domain.os_info cleanup
+# Author: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+# Added to libvirt-cim.0.6.1-10 in RHEL 6.6 as BZ#1046280
+# Added to libvirt-cim.0.6.1-9.el6_5.1 in RHEL 6.5.z as BZ#1055626
+Patch14: libvirt-cim-0.6.3-0a742856.patch
+
+# VSSD: Add properties for arch and machine
+# Author: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+# Added to libvirt-cim.0.6.1-10 in RHEL 6.6 as BZ#1046280
+# Added to libvirt-cim.0.6.1-9.el6_5.1 in RHEL 6.5.z as BZ#1055626
+Patch15: libvirt-cim-0.6.3-6024403e.patch
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 URL: http://libvirt.org/CIM/
 Requires: libxml2 >= 2.6.0
@@ -17,6 +95,8 @@ Requires: libvirt >= 0.9.0
 Requires: unzip
 # either tog-pegasus or sblim-sfcb should provide cim-server
 Requires: cim-server
+BuildRequires: autoconf
+BuildRequires: automake
 BuildRequires: libcmpiutil >= 0.5.4
 BuildRequires: tog-pegasus-devel
 BuildRequires: libvirt-devel >= 0.9.0
@@ -47,6 +127,22 @@ platforms with a single provider.
 
 # Update configure for aarch64 (bz #925923)
 %patch1 -p1
+# Patches for installation issues (bz #1070346)
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
+# Patches for adding properties for arch and machine
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
 
 %build
 %configure --disable-werror
@@ -201,6 +297,18 @@ fi
 %config(noreplace) %{_sysconfdir}/libvirt-cim.conf
 
 %changelog
+* Thu Feb 27 2014 John Ferlan <jferlan@redhat.com> 0.6.3-6
+- Add properties for arch and machine bz#1070337
+
+* Thu Feb 27 2014 John Ferlan <jferlan@redhat.com> 0.6.3-5
+- Use root/interop instead of root/PG_InterOp for tog-pegasus bz#1070346
+
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 0.6.3-4
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 0.6.3-3
+- Mass rebuild 2013-12-27
+
 * Tue Aug 6 2013 John Ferlan <jferlan@redhat.com> 0.6.3-2
 - Replace the path to the source tar.gz file
 

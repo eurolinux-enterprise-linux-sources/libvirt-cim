@@ -1,0 +1,64 @@
+From 54778c7811594a731254e086a46dcc5f25ad2ee7 Mon Sep 17 00:00:00 2001
+From: John Ferlan <jferlan@redhat.com>
+Date: Tue, 21 Jan 2014 16:23:16 -0500
+Subject: [PATCH 40/48] spec: Fix docs/*.html packaging issue
+
+Using a more recent rpmbuild on f20, I found that the 'make rpm' was failing:
+
+  Installed (but unpackaged) file(s) found:
+  /usr/share/doc/libvirt-cim-0.6.3/html/architecture.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/downloads.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/index.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/intro.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/libvirt-cim.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/news.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/patches.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/platforms.html
+  /usr/share/doc/libvirt-cim-0.6.3/html/schema.html
+  make: *** [rpm] Error 1
+
+After a bit of research - I found the following page that describes a
+workaround to add "%define _unpackaged_files_terminate_build 0" to the
+spec file:
+
+http://www.oldrpm.org/hintskinks/unpackaged/
+
+However, figuring that wasn't a great solution - I found a libvirt change
+that provided a way to work around what was being seen, see:
+
+http://www.redhat.com/archives/libvir-list/2013-November/msg00441.html
+
+It seems as though having that %doc doc/*.html is not proper any more.
+With this change I can once again build RPM packages
+
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ libvirt-cim.spec.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libvirt-cim.spec.in b/libvirt-cim.spec.in
+index c96451b..24ef280 100644
+--- a/libvirt-cim.spec.in
++++ b/libvirt-cim.spec.in
+@@ -60,6 +60,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libxkutil.so
+ mkdir -p $RPM_BUILD_ROOT/etc/ld.so.conf.d
+ echo %{_libdir}/cmpi > $RPM_BUILD_ROOT/etc/ld.so.conf.d/libvirt-cim.%{_arch}.conf
+ mkdir -p $RPM_BUILD_ROOT@INFO_STORE@
++mv $RPM_BUILD_ROOT%{_datadir}/doc/libvirt-cim-%{version} libvirt-cim-docs
+ 
+ %clean
+ rm -fr $RPM_BUILD_ROOT
+@@ -347,9 +348,8 @@ fi
+ %defattr(-, root, root)
+ %{_sysconfdir}/libvirt/cim
+ 
+-%doc README COPYING doc/CodingStyle doc/SubmittingPatches
++%doc README COPYING doc/CodingStyle doc/SubmittingPatches libvirt-cim-docs/*
+ %doc base_schema/README.DMTF
+-%doc doc/*.html
+ %{_libdir}/lib*.so*
+ %{_libdir}/cmpi/lib*.so*
+ %{_datadir}/libvirt-cim
+-- 
+1.8.5.3
+

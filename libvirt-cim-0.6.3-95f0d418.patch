@@ -1,0 +1,43 @@
+From 95f0d418fe4240a0ea2706cc400828ec90984844 Mon Sep 17 00:00:00 2001
+From: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Date: Tue, 5 Nov 2013 10:03:33 +0100
+Subject: [PATCH 34/48] schema: Fix class removal with Pegasus
+
+In provider de-registration step, the provider-register.sh
+script is attempting to delete all libvirt-cim classes from
+the Pegasus repository. Pegasus refuses to delete classes
+if it still has child classes in the repository.
+While the MOF files are processed in reverse order, the classes
+were still deleted in their original order, which can fail due
+to inter-class dependencies.
+Changed to reverse the class deletion order on a per MOF
+file base.
+
+Signed-off-by: Viktor Mihajlovski <mihajlov@linux.vnet.ibm.com>
+Signed-off-by: John Ferlan <jferlan@redhat.com>
+---
+ provider-register.sh | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/provider-register.sh b/provider-register.sh
+index b730ef3..abe8e95 100755
+--- a/provider-register.sh
++++ b/provider-register.sh
+@@ -332,8 +332,12 @@ pegasus_uninstall()
+ 	    echo "Error: wbemexec not found" >&2
+ 	    return 1
+ 	fi
+-	CLASSES=`cat $mymofs 2> /dev/null | grep '^class'| cut -d ' ' -f 2 | uniq`
+-
++	for mof in $mymofs
++	do
++        # We must delete the classes in reverse order per MOF file
++	    MOFCLASSES=`cat $mof 2> /dev/null | grep '^[[:space:]]*class' | sed 's/ \+/ /g' | tac | cut -d ' ' -f 2`
++	    CLASSES="$CLASSES $MOFCLASSES"
++	done
+ 	for _TEMPDIR in /var/tmp /tmp
+ 	  do
+ 	  if test -w $_TEMPDIR
+-- 
+1.8.5.3
+
